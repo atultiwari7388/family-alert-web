@@ -1,7 +1,11 @@
 export const metadata = {
-  title: "Home - Mylex Infotech",
+  title: "Home - Family Alert",
 };
 
 export default function Home() {
-  return <h1>Family Alert Home Screen</h1>;
+  return (
+    <h1 className="min-h-screen items-center justify-center flex text-2xl">
+      Family Alert Home Screen
+    </h1>
+  );
 }

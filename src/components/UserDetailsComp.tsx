@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firestore/firebase";
+import { LuAlarmClock, LuMessageSquareMore } from "react-icons/lu";
+import { MdCallEnd } from "react-icons/md";
+import { HiOutlineSpeakerWave } from "react-icons/hi2";
+import { AiOutlineAudioMuted } from "react-icons/ai";
 
 interface UserData {
   email: string | null;
@@ -14,6 +18,7 @@ interface UserData {
 export default function UserDetails({ userId }: { userId: string }) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCallScreen, setShowCallScreen] = useState<boolean>(false);
 
   // Fetch user details
   useEffect(() => {
@@ -57,24 +62,118 @@ export default function UserDetails({ userId }: { userId: string }) {
   const fullName =
     `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim() ||
     "Unknown Name";
-  const email =
-    userData.email?.trim() !== "" ? userData.email : "Unknown Email";
-  const mobileNumber =
-    userData.mobileNumber?.trim() !== ""
-      ? userData.mobileNumber
-      : "Unknown Number";
+  // const email =
+  //   userData.email?.trim() !== "" ? userData.email : "Unknown Email";
+  // const mobileNumber =
+  //   userData.mobileNumber?.trim() !== ""
+  //     ? userData.mobileNumber
+  //     : "Unknown Number";
 
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-80 text-center">
-        <div className="flex justify-center">
-          <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-bold text-gray-600">
-            {fullName.charAt(0).toUpperCase()}
+  if (showCallScreen) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-gray-100">
+        <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-lg">
+          <h1 className="text-lg font-bold text-center mb-4">Alert</h1>
+
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="flex justify-between items-center bg-blue-100 p-4 rounded-lg"
+              >
+                <div>
+                  <h2 className="text-sm font-medium">John Dew</h2>
+                  <p
+                    className={`text-xs font-medium ${
+                      idx % 2 === 0 ? "text-green-600" : "text-gray-600"
+                    }`}
+                  >
+                    {idx % 2 === 0 ? "Ringing..." : "00:54"}
+                  </p>
+                </div>
+                <button className="bg-red-100 p-2 rounded-full">
+                  <i className="fas fa-phone-slash text-red-500">
+                    <MdCallEnd />
+                  </i>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-center space-x-10">
+            <button className="bg-gray-200 p-4 rounded-full">
+              <i className="fas fa-volume-up text-gray-600 text-lg">
+                <HiOutlineSpeakerWave />
+              </i>
+            </button>
+            <button className="bg-gray-200 p-4 rounded-full">
+              <i className="fas fa-microphone-slash text-gray-600 text-lg">
+                <AiOutlineAudioMuted />
+              </i>
+            </button>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setShowCallScreen(false)}
+              className="bg-red-500 text-white text-lg font-bold px-6 py-3 rounded-full shadow-lg hover:bg-red-600"
+            >
+              End Group Call
+            </button>
           </div>
         </div>
-        <h1 className="text-xl font-semibold text-gray-800 mt-4">{fullName}</h1>
-        <p className="text-gray-500 text-sm">{email}</p>
-        <p className="text-gray-700 font-medium mt-2">{mobileNumber}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-lg relative">
+        <h1 className="text-lg font-bold text-center mb-4">Alert Audio...</h1>
+        <h2 className="text-xl font-semibold text-center mb-8">
+          {fullName}&apos;s Group Call
+        </h2>
+
+        <div className="absolute top-4 right-4 bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center">
+          T
+        </div>
+
+        <div className="flex justify-around mt-6">
+          <div className="flex flex-col items-center">
+            <button className="bg-orange-100 p-4 rounded-full">
+              <i className="fas fa-clock text-orange-500 text-xl">
+                <LuAlarmClock />
+              </i>
+            </button>
+            <span className="mt-2 text-sm font-medium">Reminder</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <button className="bg-orange-100 p-4 rounded-full">
+              <i className="fas fa-envelope text-orange-500 text-xl">
+                <LuMessageSquareMore />
+              </i>
+            </button>
+            <span className="mt-2 text-sm font-medium">Message</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <button className="bg-orange-100 p-4 rounded-full">
+              <i className="fas fa-phone-slash text-orange-500 text-xl">
+                <MdCallEnd />
+              </i>
+            </button>
+            <span className="mt-2 text-sm font-medium">Decline</span>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={() => setShowCallScreen(true)}
+            className="relative bg-green-500 text-white text-lg font-bold px-6 py-6 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300"
+          >
+            <span className="absolute inset-0 animate-ping bg-green-400 rounded-full opacity-75"></span>
+            Accept
+          </button>
+        </div>
       </div>
     </div>
   );
