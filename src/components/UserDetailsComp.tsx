@@ -128,50 +128,52 @@ export default function UserDetails({ userId }: { userId: string }) {
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-lg relative">
-        <h1 className="text-lg font-bold text-center mb-4">Alert Audio...</h1>
-        <h2 className="text-xl font-semibold text-center mb-8">
-          {fullName}&apos;s Group Call
-        </h2>
-
+      <div className="h-full w-full max-w-md p-6 bg-white rounded-2xl shadow-lg relative flex flex-col justify-between">
         <div className="absolute top-4 right-4 bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center">
           T
         </div>
+        <div className="text-center">
+          <h1 className="text-lg font-bold mb-4">Alert Audio...</h1>
+          <h2 className="text-xl font-semibold mb-8">
+            {fullName}&apos;s Group Call
+          </h2>
+        </div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
 
-        <div className="flex justify-around mt-6">
+        <div className="flex justify-around">
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full">
-              <i className="fas fa-clock text-orange-500 text-xl">
-                <LuAlarmClock />
-              </i>
+            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <LuAlarmClock className="text-orange-500 text-2xl" />
             </button>
             <span className="mt-2 text-sm font-medium">Reminder</span>
           </div>
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full">
-              <i className="fas fa-envelope text-orange-500 text-xl">
-                <LuMessageSquareMore />
-              </i>
+            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <LuMessageSquareMore className="text-orange-500 text-2xl" />
             </button>
             <span className="mt-2 text-sm font-medium">Message</span>
           </div>
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full">
-              <i className="fas fa-phone-slash text-orange-500 text-xl">
-                <MdCallEnd />
-              </i>
+            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <MdCallEnd className="text-orange-500 text-2xl" />
             </button>
             <span className="mt-2 text-sm font-medium">Decline</span>
           </div>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-center mt-8">
           <button
             onClick={() => setShowCallScreen(true)}
-            className="relative bg-green-500 text-white text-lg font-bold px-6 py-6 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300"
+            className="relative bg-green-500 text-white text-lg font-bold px-16 py-6 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300"
           >
             <span className="absolute inset-0 animate-ping bg-green-400 rounded-full opacity-75"></span>
-            Accept
+            <h1 className="text-sm">Accept</h1>
           </button>
         </div>
       </div>
