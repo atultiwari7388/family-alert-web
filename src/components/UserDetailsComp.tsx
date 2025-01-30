@@ -128,7 +128,7 @@ export default function UserDetails({ userId }: { userId: string }) {
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gray-100">
-      <div className="h-full w-full max-w-md p-6 bg-white rounded-2xl shadow-lg relative flex flex-col justify-between">
+      <div className="h-[670] w-full max-w-md p-6 rounded-2xl relative flex flex-col justify-between border border-red-500">
         <div className="absolute top-4 right-4 bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center">
           T
         </div>
