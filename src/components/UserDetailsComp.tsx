@@ -127,53 +127,54 @@ export default function UserDetails({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-gray-100">
-      <div className="md:h-full sm:h-full lg:h-full w-full max-w-md p-6 rounded-2xl relative flex flex-col justify-between border border-red-500">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-md p-4 sm:p-6 rounded-2xl relative flex flex-col justify-between border border-red-500 min-h-[80vh] sm:min-h-[600px]">
         <div className="absolute top-4 right-4 bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center">
           T
         </div>
-        <div className="text-center">
-          <h1 className="text-lg font-bold mb-4">Alert Audio...</h1>
-          <h2 className="text-xl font-semibold mb-8">
+
+        <div className="text-center mt-8 sm:mt-4">
+          <h1 className="text-base sm:text-lg font-bold mb-2 sm:mb-4">
+            Alert Audio...
+          </h1>
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-8">
             {fullName}&apos;s Group Call
           </h2>
         </div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
 
-        <div className="flex justify-around">
+        {/* Spacer divs removed as they're not needed for responsive design */}
+        <div className="flex-grow"></div>
+
+        <div className="grid grid-cols-3 gap-4 px-2 sm:px-4">
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
-              <LuAlarmClock className="text-orange-500 text-2xl" />
+            <button className="bg-orange-100 p-3 sm:p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <LuAlarmClock className="text-orange-500 text-xl sm:text-2xl" />
             </button>
-            <span className="mt-2 text-sm font-medium">Reminder</span>
+            <span className="mt-2 text-xs sm:text-sm font-medium">
+              Reminder
+            </span>
           </div>
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
-              <LuMessageSquareMore className="text-orange-500 text-2xl" />
+            <button className="bg-orange-100 p-3 sm:p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <LuMessageSquareMore className="text-orange-500 text-xl sm:text-2xl" />
             </button>
-            <span className="mt-2 text-sm font-medium">Message</span>
+            <span className="mt-2 text-xs sm:text-sm font-medium">Message</span>
           </div>
           <div className="flex flex-col items-center">
-            <button className="bg-orange-100 p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
-              <MdCallEnd className="text-orange-500 text-2xl" />
+            <button className="bg-orange-100 p-3 sm:p-4 rounded-full shadow-md hover:scale-110 transition-all duration-200">
+              <MdCallEnd className="text-orange-500 text-xl sm:text-2xl" />
             </button>
-            <span className="mt-2 text-sm font-medium">Decline</span>
+            <span className="mt-2 text-xs sm:text-sm font-medium">Decline</span>
           </div>
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-6 sm:mt-8 mb-4">
           <button
             onClick={() => setShowCallScreen(true)}
-            className="relative bg-green-500 text-white text-lg font-bold px-16 py-6 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300"
+            className="relative bg-green-500 text-white font-bold px-12 sm:px-16 py-4 sm:py-6 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300"
           >
             <span className="absolute inset-0 animate-ping bg-green-400 rounded-full opacity-75"></span>
-            <h1 className="text-sm">Accept</h1>
+            <h1 className="text-xs sm:text-sm">Accept</h1>
           </button>
         </div>
       </div>
