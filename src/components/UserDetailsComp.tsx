@@ -148,6 +148,7 @@ export default function UserDetails({ userId }: { userId: string }) {
           userId={userId}
           members={members}
           onError={setError}
+          roomID={userId}
         />
 
         <div className="mt-6 flex justify-center">
