@@ -69,7 +69,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
           },
         ],
         scenario: {
-          mode: ZegoUIKitPrebuilt.OneONoneCall,
+          mode: ZegoUIKitPrebuilt.GroupCall,
         },
       });
 
