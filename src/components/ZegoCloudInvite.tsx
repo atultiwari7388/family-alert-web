@@ -1,21 +1,16 @@
-// ZegoCloudInvite.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
 import { FcVideoCall } from "react-icons/fc";
-import { APP_ID, SERVER_SECRET } from "@/utils/constants"; // Assuming you have these constants
+import { APP_ID, SERVER_SECRET } from "@/utils/constants";
 
 interface ZegoCloudInviteProps {
-  userData: {
-    firstName: string | null;
-    lastName: string | null;
-  } | null;
   userId: string;
   members: { uid: string; name: string }[];
   onError: (error: string) => void;
-  roomID: string; // Add roomID prop
+  roomID: string;
   uName: string;
 }
 
@@ -29,117 +24,99 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [callInvited, setCallInvited] = useState<string | null>(null);
-  const zegoContainer = useRef<HTMLDivElement>(null);
+  const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isZegoReady, setIsZegoReady] = useState(false); // New state for Zego readiness
+  const [isZegoReady, setIsZegoReady] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    console.log("ZegoCloudInvite useEffect started");
+  }, []);
 
-    const fetchTokenAndInitializeZego = async () => {
-      setIsLoading(true);
-      console.log("fetchTokenAndInitializeZego started");
-
-      try {
-        const appId = APP_ID;
-        const serverSecret = SERVER_SECRET;
-        const userName = uName + userId;
-
-        console.log("App ID:", appId);
-        console.log("Server Secret (exists?):", !!serverSecret);
-        console.log("User  ID:", userId);
-        console.log("Room ID:", roomID);
-        console.log("User Name:", userName);
-
-        const token = ZegoUIKitPrebuilt.generateKitTokenForTest(
-          appId,
-          serverSecret,
-          roomID,
-          userId,
-          userName
-        );
-
-        console.log("Token generated:", token);
-
-        if (token && zegoContainer.current) {
-          console.log("Zego container is available");
-          const zegoInstance = ZegoUIKitPrebuilt.create(token);
-          zegoInstance.addPlugins({ ZIM });
-
-          zegoInstance.joinRoom({
-            container: zegoContainer.current,
-            sharedLinks: [{ url: window.location.origin }],
-            scenario: { mode: ZegoUIKitPrebuilt.OneONoneCall },
-          });
-
-          setZp(zegoInstance);
-          setIsZegoReady(true);
-          console.log("Zego instance initialized and ready");
-        } else {
-          console.log(
-            "Token or container is missing.  Token:",
-            !!token,
-            "Container:",
-            !!zegoContainer.current
-          );
-        }
-      } catch (error) {
-        console.error("Error initializing Zego:", error);
-        onError(
-          error instanceof Error ? error.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoading(false);
-        console.log("fetchTokenAndInitializeZego finished");
-      }
-    };
-
-    if (userId && roomID) {
-      console.log("Calling fetchTokenAndInitializeZego");
-      fetchTokenAndInitializeZego();
+  // ✅ Move this function outside useEffect
+  const myMeeting = async () => {
+    if (!zegoContainer.current) {
+      console.warn("Zego container is not available yet.");
+      return;
     }
 
+    setIsLoading(true);
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+      const appId = APP_ID;
+      const serverSecret = SERVER_SECRET;
+      const userName = `${uName}_${userId}`;
+
+      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+        appId,
+        serverSecret,
+        roomID,
+        userId,
+        userName,
+        Date.now() + 3600 * 1000
+      );
+
+      const zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
+      zegoInstance.addPlugins({ ZIM });
+
+      zegoInstance.joinRoom({
+        container: zegoContainer.current,
+        sharedLinks: [
+          {
+            name: "Copy link",
+            url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?roomID=${roomID}`,
+          },
+        ],
+        scenario: {
+          mode: ZegoUIKitPrebuilt.OneONoneCall,
+        },
+      });
+
+      setZp(zegoInstance);
+      setIsZegoReady(true);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        onError("Permission denied for camera and microphone.");
+      } else {
+        onError("An unknown error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ✅ UseEffect to call myMeeting when dependencies are ready
+  useEffect(() => {
+    if (userId && roomID && zegoContainer.current) {
+      myMeeting();
+    }
     return () => {
       if (zp) {
-        console.log("Destroying Zego instance");
         zp.destroy();
         setZp(null);
         setIsZegoReady(false);
       }
-      console.log("ZegoCloudInvite useEffect cleanup finished");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, roomID]);
+  }, [userId, roomID, zegoContainer.current]); // ✅ Add zegoContainer.current as a dependency
 
   const invite = (targetUser: { userID: string; userName: string }) => {
-    console.log("Invite function called");
-    if (!isZegoReady) {
-      console.warn("Zego instance is not yet initialized.");
-      return;
-    }
+    if (!isZegoReady) return;
 
     if (zp) {
-      console.log("Sending call invitation to:", targetUser);
       setCallInvited(targetUser.userID);
       zp.sendCallInvitation({
         callees: [targetUser],
         callType: ZegoUIKitPrebuilt.InvitationTypeVideoCall,
         timeout: 60,
-      })
-        .then((res) => console.warn("Call invitation sent:", res))
-        .catch((err) => {
-          console.error("Error sending call invitation:", err);
-          onError("Failed to send call invitation.");
-          setCallInvited(null);
-        });
-    } else {
-      console.warn("Zego instance is not initialized.");
+      }).catch(() => {
+        onError("Failed to send call invitation.");
+        setCallInvited(null);
+      });
     }
   };
 
   if (!isClient) {
-    return <div>Loading... (Zego will initialize on the client)</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -162,8 +139,8 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
               className="bg-red-100 p-2 rounded-full"
               onClick={() =>
                 invite({ userID: member.uid, userName: member.name })
-              } // Call the invite function
-              disabled={!isZegoReady || member.uid === callInvited || isLoading} // Disable until ready
+              }
+              disabled={!isZegoReady || member.uid === callInvited || isLoading}
             >
               <FcVideoCall className="text-red-500" />
               Invite
