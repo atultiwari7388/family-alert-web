@@ -126,42 +126,42 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     return <div>Loading...</div>;
   }
 
-  return (
-    <div>
-      {isLoading && <div>Loading...</div>}
-      <div
-        ref={(el) => {
-          zegoContainer.current = el;
-        }}
-        style={{ width: "100%", height: "500px" }}
-      ></div>
-      <div className="space-y-4">
-        {members.map((member) => (
-          <div
-            key={member.uid}
-            className="flex justify-between items-center bg-blue-100 p-4 rounded-lg"
-          >
-            <div>
-              <h2 className="text-sm font-medium">{member.name}</h2>
-              <p className="text-xs font-medium text-green-600">
-                {member.uid === callInvited ? "Inviting..." : "Available"}
-              </p>
-            </div>
-            <button
-              className="bg-red-100 p-2 rounded-full"
-              onClick={() =>
-                invite({ userID: member.uid, userName: member.name })
-              }
-              disabled={!isZegoReady || member.uid === callInvited || isLoading}
-            >
-              <FcVideoCall className="text-red-500" />
-              Invite
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  // return (
+  //   <div>
+  //     {isLoading && <div>Loading...</div>}
+  //     <div
+  //       ref={(el) => {
+  //         zegoContainer.current = el;
+  //       }}
+  //       style={{ width: "100%", height: "500px" }}
+  //     ></div>
+  //     <div className="space-y-4">
+  //       {members.map((member) => (
+  //         <div
+  //           key={member.uid}
+  //           className="flex justify-between items-center bg-blue-100 p-4 rounded-lg"
+  //         >
+  //           <div>
+  //             <h2 className="text-sm font-medium">{member.name}</h2>
+  //             <p className="text-xs font-medium text-green-600">
+  //               {member.uid === callInvited ? "Inviting..." : "Available"}
+  //             </p>
+  //           </div>
+  //           <button
+  //             className="bg-red-100 p-2 rounded-full"
+  //             onClick={() =>
+  //               invite({ userID: member.uid, userName: member.name })
+  //             }
+  //             disabled={!isZegoReady || member.uid === callInvited || isLoading}
+  //           >
+  //             <FcVideoCall className="text-red-500" />
+  //             Invite
+  //           </button>
+  //         </div>
+  //       ))}
+  //     </div>
+  //   </div>
+  // );
 };
 
 export default ZegoCloudInvite;
