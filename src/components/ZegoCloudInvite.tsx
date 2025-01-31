@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 // import { ZIM } from "zego-zim-web";
-import { FcVideoCall } from "react-icons/fc";
+// import { FcVideoCall } from "react-icons/fc";
 import { APP_ID } from "@/utils/constants";
 
 interface ZegoCloudInviteProps {
@@ -23,7 +23,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 }) => {
   const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [callInvited, setCallInvited] = useState<string | null>(null);
+  // const [callInvited, setCallInvited] = useState<string | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isZegoReady, setIsZegoReady] = useState(false);
@@ -156,7 +156,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
   return (
     <div>
-      {isLoading && <div>Loading...</div>}
+      {isZegoReady && isLoading && <div>Loading...</div>}
       <div
         ref={(el) => {
           myMeeting(el as HTMLDivElement);
@@ -172,7 +172,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             <div>
               <h2 className="text-sm font-medium">{member.name}</h2>
               <p className="text-xs font-medium text-green-600">
-                {member.uid === callInvited ? "Inviting..." : "Available"}
+                {member.uid ? "Inviting..." : "Available"}
               </p>
             </div>
             {/* <button
