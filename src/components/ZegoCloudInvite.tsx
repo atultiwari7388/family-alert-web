@@ -130,7 +130,9 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     <div>
       {isLoading && <div>Loading...</div>}
       <div
-        ref={(el) => (zegoContainer.current = el)}
+        ref={(el) => {
+          zegoContainer.current = el;
+        }}
         style={{ width: "100%", height: "500px" }}
       ></div>
       <div className="space-y-4">
