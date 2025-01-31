@@ -32,10 +32,11 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     setIsClient(true);
   }, []);
 
-  // ✅ Move this function outside useEffect
   const myMeeting = async () => {
+    // Ensure container exists before proceeding
     if (!zegoContainer.current) {
-      console.warn("Zego container is not available yet.");
+      console.warn("Zego container is not available yet. Retrying...");
+      setTimeout(myMeeting, 500); // Retry after 500ms
       return;
     }
 
@@ -60,7 +61,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       zegoInstance.addPlugins({ ZIM });
 
       zegoInstance.joinRoom({
-        container: zegoContainer.current,
+        container: zegoContainer.current, // Ensure container exists
         sharedLinks: [
           {
             name: "Copy link",
@@ -85,11 +86,16 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     }
   };
 
-  // ✅ UseEffect to call myMeeting when dependencies are ready
   useEffect(() => {
-    if (userId && roomID && zegoContainer.current) {
-      myMeeting();
+    if (userId && roomID) {
+      const checkContainerReady = setInterval(() => {
+        if (zegoContainer.current) {
+          clearInterval(checkContainerReady);
+          myMeeting();
+        }
+      }, 500); // Retry every 500ms
     }
+
     return () => {
       if (zp) {
         zp.destroy();
@@ -97,7 +103,8 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         setIsZegoReady(false);
       }
     };
-  }, [userId, roomID, zegoContainer.current]); // ✅ Add zegoContainer.current as a dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, roomID]);
 
   const invite = (targetUser: { userID: string; userName: string }) => {
     if (!isZegoReady) return;
@@ -122,7 +129,10 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   return (
     <div>
       {isLoading && <div>Loading...</div>}
-      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }}></div>
+      <div
+        ref={(el) => (zegoContainer.current = el)}
+        style={{ width: "100%", height: "500px" }}
+      ></div>
       <div className="space-y-4">
         {members.map((member) => (
           <div
