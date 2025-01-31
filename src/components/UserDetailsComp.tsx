@@ -125,8 +125,11 @@ export default function UserDetails({ userId }: { userId: string }) {
             "@zegocloud/zego-uikit-prebuilt"
           );
 
-          const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0");
-          const serverSecret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET || "";
+          // const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0");
+          const appID = 1661063092;
+          // const serverSecret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET || "";
+          const serverSecret =
+            "d2b9606856528a45f9f35467a32a16bd5417bb63d9d52f084653427e79b90a76";
 
           if (!appID || !serverSecret) {
             console.error("Zego App ID or Server Secret is missing!");
@@ -194,7 +197,7 @@ export default function UserDetails({ userId }: { userId: string }) {
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-4 sm:p-6 rounded-2xl relative flex flex-col justify-between border border-red-500 min-h-[80vh] sm:min-h-[600px]">
+      <div className="w-full max-w-md p-4 sm:p-6 rounded-2xl relative flex flex-col justify-between  min-h-[80vh] sm:min-h-[600px]">
         <div className="text-center mt-8 sm:mt-4">
           <h1 className="text-base sm:text-lg font-bold mb-2 sm:mb-4">Alert</h1>
           <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-8">
