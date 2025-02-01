@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
-import { FcVideoCall } from "react-icons/fc";
 import { APP_ID, SERVER_SECRET } from "@/utils/constants";
 
 interface ZegoCloudInviteProps {
@@ -33,10 +32,9 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   }, []);
 
   const myMeeting = async () => {
-    // Ensure container exists before proceeding
     if (!zegoContainer.current) {
       console.warn("Zego container is not available yet. Retrying...");
-      setTimeout(myMeeting, 500); // Retry after 500ms
+      setTimeout(myMeeting, 500);
       return;
     }
 
@@ -61,13 +59,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       zegoInstance.addPlugins({ ZIM });
 
       zegoInstance.joinRoom({
-        container: zegoContainer.current, // Ensure container exists
-        sharedLinks: [
-          {
-            name: "Copy link",
-            url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?roomID=${roomID}`,
-          },
-        ],
+        container: zegoContainer.current,
         scenario: {
           mode: ZegoUIKitPrebuilt.GroupCall,
         },
@@ -93,7 +85,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
           clearInterval(checkContainerReady);
           myMeeting();
         }
-      }, 500); // Retry every 500ms
+      }, 500);
     }
 
     return () => {
@@ -103,16 +95,27 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         setIsZegoReady(false);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, roomID]);
 
-  const invite = (targetUser: { userID: string; userName: string }) => {
+  useEffect(() => {
+    if (isZegoReady) {
+      if (members.length === 0) {
+        onError("No members available to call.");
+      } else {
+        members.forEach((member) => {
+          invite({ userID: member.uid, userName: member.name });
+        });
+      }
+    }
+  }, [isZegoReady, members]);
+
+  const invite = (target: { userID: string; userName: string }) => {
     if (!isZegoReady) return;
 
     if (zp) {
-      setCallInvited(targetUser.userID);
+      setCallInvited(target.userID);
       zp.sendCallInvitation({
-        callees: [targetUser],
+        callees: [target],
         callType: ZegoUIKitPrebuilt.InvitationTypeVideoCall,
         timeout: 60,
       }).catch(() => {
@@ -135,31 +138,25 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         }}
         style={{ width: "100%", height: "500px" }}
       ></div>
-      <div className="space-y-4">
-        {members.map((member) => (
-          <div
-            key={member.uid}
-            className="flex justify-between items-center bg-blue-100 p-4 rounded-lg"
-          >
-            <div>
-              <h2 className="text-sm font-medium">{member.name}</h2>
-              <p className="text-xs font-medium text-green-600">
-                {member.uid === callInvited ? "Inviting..." : "Available"}
-              </p>
-            </div>
-            <button
-              className="bg-red-100 p-2 rounded-full"
-              onClick={() =>
-                invite({ userID: member.uid, userName: member.name })
-              }
-              disabled={!isZegoReady || member.uid === callInvited || isLoading}
+      {members.length === 0 ? (
+        <div>No members available to call.</div>
+      ) : (
+        <div className="space-y-4">
+          {members.map((member) => (
+            <div
+              key={member.uid}
+              className="flex justify-between items-center bg-blue-100 p-4 rounded-lg"
             >
-              <FcVideoCall className="text-red-500" />
-              Invite
-            </button>
-          </div>
-        ))}
-      </div>
+              <div>
+                <h2 className="text-sm font-medium">{member.name}</h2>
+                <p className="text-xs font-medium text-green-600">
+                  {member.uid === callInvited ? "Inviting..." : "Available"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
