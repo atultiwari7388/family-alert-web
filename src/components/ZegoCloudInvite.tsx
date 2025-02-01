@@ -23,6 +23,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // const [membersToCall, setMembersToCall] = useState<string[]>([]); // Track members to call
 
   useEffect(() => {
     const myMeeting = async () => {
@@ -30,14 +31,12 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
       setIsLoading(true);
       try {
-        // Request audio permission only (no video)
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
         const appId = APP_ID;
         const serverSecret = SERVER_SECRET;
         const userName = `${uName}_${userId}`;
 
-        // Generate token
         const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
           appId,
           serverSecret,
@@ -47,30 +46,25 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
           Date.now() + 3600 * 1000
         );
 
-        // Create Zego instance
         const zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
         zegoInstance.addPlugins({ ZIM });
 
-        // Join the room as a voice call
         zegoInstance.joinRoom({
           container: zegoContainer.current,
           scenario: {
             mode: ZegoUIKitPrebuilt.GroupCall,
           },
-          turnOnCameraWhenJoining: false, // Voice-only mode
-          turnOnMicrophoneWhenJoining: true, // Enable microphone
-          showScreenSharingButton: false, // No screen share
-          showRoomTimer: true, // Show call duration
-          showUserList: true, // Show who joined
+          turnOnCameraWhenJoining: false,
+          turnOnMicrophoneWhenJoining: true,
+          showScreenSharingButton: false,
+          showRoomTimer: true,
+          showUserList: true,
         });
 
         setZp(zegoInstance);
-
-        // Invite all group members
-        inviteMembers(zegoInstance);
       } catch (error) {
         if (error instanceof DOMException && error.name === "NotAllowedError") {
-          onError("Permission denied for camera and microphone.");
+          onError("Permission denied for microphone.");
         } else {
           onError("An unknown error occurred.");
         }
@@ -91,62 +85,52 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     };
   }, [userId, roomID]);
 
-  // const inviteMembers = (zegoInstance: ZegoUIKitPrebuilt) => {
-
-  //   if (!zegoInstance) return;
-
-  //   members.forEach((member) => {
-  //     zegoInstance
-  //       .sendCallInvitation({
-  //         callees: [{ userID: member.uid, userName: member.name }],
-  //         callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall, // Voice Call
-  //         timeout: 60, // 60 seconds to accept
-  //       })
-  //       .catch(() => {
-  //         onError(`Failed to call ${member.name}`);
-  //       });
-  //   });
-  // };
-
-  const inviteMembers = (zegoInstance: ZegoUIKitPrebuilt) => {
-    if (!zegoInstance) return;
+  const callMember = (member: { uid: string; name: string }) => {
+    if (!zp) return; // Ensure Zego instance is available
 
     const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000; // 1 second
+    const RETRY_DELAY = 1000;
 
-    members.forEach((member) => {
-      let retryCount = 0;
+    let retryCount = 0;
 
-      const sendInvitation = () => {
-        zegoInstance
-          .sendCallInvitation({
-            callees: [{ userID: member.uid, userName: member.name }],
-            callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
-            timeout: 60,
-          })
-          .then(() => {
-            console.log(`Call invitation sent to ${member.name}`);
-          })
-          .catch((error) => {
-            console.error(`Failed to call ${member.name}:`, error);
-            if (retryCount < MAX_RETRIES) {
-              retryCount++;
-              console.log(`Retrying in ${RETRY_DELAY / 1000} seconds...`);
-              setTimeout(sendInvitation, RETRY_DELAY);
-            } else {
-              onError(`Failed to call ${member.name} after multiple attempts.`);
-            }
-          });
-      };
+    const sendInvitation = () => {
+      zp.sendCallInvitation({
+        callees: [{ userID: member.uid, userName: member.name }],
+        callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
+        timeout: 60,
+      })
+        .then(() => {
+          console.log(`Call invitation sent to ${member.name}`);
+        })
+        .catch((error) => {
+          console.error(`Failed to call ${member.name}:`, error);
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.log(`Retrying in ${RETRY_DELAY / 1000} seconds...`);
+            setTimeout(sendInvitation, RETRY_DELAY);
+          } else {
+            onError(`Failed to call ${member.name} after multiple attempts.`);
+          }
+        });
+    };
 
-      sendInvitation();
-    });
+    sendInvitation();
   };
 
   return (
     <div>
       {isLoading && <div>Connecting...</div>}
       <div ref={zegoContainer} style={{ width: "100%", height: "500px" }}></div>
+
+      {/* List of members with call buttons */}
+      <div>
+        {members.map((member) => (
+          <div key={member.uid}>
+            {member.name} ({member.uid})
+            <button onClick={() => callMember(member)}>Call</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
