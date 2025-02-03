@@ -1,5 +1,3 @@
-//ZegoCloudInvite.tsx
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -25,32 +23,42 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // const [membersToCall, setMembersToCall] = useState<string[]>([]); // Track members to call
+  const zimRef = useRef<ZIM | null>(null);
 
   useEffect(() => {
-    const myMeeting = async () => {
+    const initializeZego = async () => {
       if (!zegoContainer.current) return;
 
       setIsLoading(true);
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Verify environment and permissions
+        if (!window.isSecureContext) {
+          throw new Error("Secure context (HTTPS/localhost) required");
+        }
 
-        const appId = APP_ID;
-        const serverSecret = SERVER_SECRET;
-        const userName = `${uName}_${userId}`;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        stream.getTracks().forEach((track) => track.stop());
 
+        // Generate fresh token
         const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-          appId,
-          serverSecret,
+          APP_ID,
+          SERVER_SECRET,
           roomID,
           userId,
-          userName,
+          `${uName}_${userId}`,
           Date.now() + 3600 * 1000
         );
 
+        // Initialize Zego instance
         const zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
+
+        // Initialize ZIM before joining room
+        zimRef.current = await ZIM.create({ appID: APP_ID });
         zegoInstance.addPlugins({ ZIM });
 
+        // Configure room settings
         zegoInstance.joinRoom({
           container: zegoContainer.current,
           scenario: {
@@ -58,81 +66,100 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
           },
           turnOnCameraWhenJoining: false,
           turnOnMicrophoneWhenJoining: true,
+
+          showAudioVideoSettingsButton: true,
           showScreenSharingButton: false,
           showRoomTimer: true,
           showUserList: true,
+          layout: "Auto",
         });
 
         setZp(zegoInstance);
+        handleInvitations(zegoInstance);
       } catch (error) {
-        if (error instanceof DOMException && error.name === "NotAllowedError") {
-          onError("Permission denied for microphone.");
-        } else {
-          onError("An unknown error occurred.");
-        }
+        handleErrors(error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (userId && roomID) {
-      myMeeting();
+      initializeZego();
     }
 
     return () => {
       if (zp) {
         zp.destroy();
+        zimRef.current?.destroy();
         setZp(null);
       }
     };
   }, [userId, roomID]);
 
-  const callMember = (member: { uid: string; name: string }) => {
-    if (!zp) return; // Ensure Zego instance is available
+  const handleErrors = (error: unknown) => {
+    console.error("Error:", error);
+    if (error instanceof DOMException) {
+      onError(
+        error.name === "NotAllowedError"
+          ? "Microphone access required"
+          : "Audio device error"
+      );
+    } else if (error instanceof Error) {
+      onError(error.message);
+    } else {
+      onError("Connection failed");
+    }
+  };
 
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000;
+  const handleInvitations = (zegoInstance: ZegoUIKitPrebuilt) => {
+    if (!members.length) return;
 
-    let retryCount = 0;
+    const INVITATION_DELAY = 2000; // 2 seconds between invites
+    const MAX_RETRIES = 2;
 
-    const sendInvitation = () => {
-      zp.sendCallInvitation({
-        callees: [{ userID: member.uid, userName: member.name }],
-        callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
-        timeout: 60,
-      })
-        .then(() => {
-          console.log(`Call invitation sent to ${member.name}`);
-        })
-        .catch((error) => {
-          console.error(`Failed to call ${member.name}:`, error);
-          if (retryCount < MAX_RETRIES) {
-            retryCount++;
-            console.log(`Retrying in ${RETRY_DELAY / 1000} seconds...`);
-            setTimeout(sendInvitation, RETRY_DELAY);
-          } else {
-            onError(`Failed to call ${member.name} after multiple attempts.`);
+    members.forEach((member, index) => {
+      setTimeout(async () => {
+        let attempts = 0;
+        const sendInvite = async () => {
+          try {
+            const response = await zegoInstance.sendCallInvitation({
+              callees: [{ userID: member.uid, userName: member.name }],
+              callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
+              timeout: 60,
+            });
+
+            if (response.errorInvitees.length > 0) {
+              throw new Error("Invitation failed");
+            }
+            console.log("Invitation sent to:", member.name);
+          } catch (error) {
+            console.error("Invitation error:", error);
+            if (attempts++ < MAX_RETRIES) {
+              console.log(`Retrying ${member.name} (attempt ${attempts})`);
+              setTimeout(sendInvite, 1000 * attempts);
+            } else {
+              onError(`Failed to reach ${member.name}`);
+            }
           }
-        });
-    };
+        };
 
-    sendInvitation();
+        sendInvite();
+      }, index * INVITATION_DELAY);
+    });
   };
 
   return (
-    <div>
-      {isLoading && <div>Connecting...</div>}
-      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }}></div>
-
-      {/* List of members with call buttons */}
-      <div>
-        {members.map((member) => (
-          <div key={member.uid}>
-            {member.name} ({member.uid})
-            <button onClick={() => callMember(member)}>Call</button>
-          </div>
-        ))}
-      </div>
+    <div className="voice-call-container">
+      {isLoading && <div className="loading-text">Initializing call...</div>}
+      <div
+        ref={zegoContainer}
+        style={{
+          width: "100%",
+          height: "500px",
+          backgroundColor: "#1a1a1a",
+          borderRadius: "8px",
+        }}
+      />
     </div>
   );
 };
