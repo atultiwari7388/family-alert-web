@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const appID = parseInt(process.env.ZEGO_APP_ID || "");
-    const secret = process.env.ZEGO_SERVER_SECRET || "";
+    const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "");
+    const secret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET || "";
 
     if (isNaN(appID)) {
       console.error("ZEGO_APP_ID is not a valid number");
