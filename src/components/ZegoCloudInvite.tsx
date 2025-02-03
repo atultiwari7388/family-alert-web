@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
-import { APP_ID, SERVER_SECRET } from "@/utils/constants";
 
 interface ZegoCloudInviteProps {
   userId: string;
@@ -20,351 +19,234 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   roomID,
   uName,
 }) => {
-  const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
+  const zpRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const zimRef = useRef<ZIM | null>(null);
-  const isInitializedRef = useRef(false);
+
+  const fetchToken = async (userId: string, roomID: string) => {
+    try {
+      const response = await fetch(
+        `/api/token?userID=${userId}&roomID=${roomID}&expiresIn=3600`
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Token fetch failed: ${response.status} - ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      return data.token;
+    } catch (error: unknown) {
+      console.error("Token error:", error);
+      onError(
+        "Token fetch failed: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
+      throw error;
+    }
+  };
+
+  // useEffect(() => {
+  //   const myMeeting = async () => {
+  //     if (!zegoContainer.current) return;
+
+  //     setIsLoading(true);
+  //     try {
+  //       await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  //       const token = await fetchToken(userId, roomID);
+
+  //       try {
+  //         // zimRef = ZIM.create({
+  //         //   appID: parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || ""),
+  //         // });
+
+  //         console.log("Token:", token);
+  //       } catch (zimError: Error | unknown) {
+  //         console.error("ZIM Login Error:", zimError);
+  //         onError(
+  //           "ZIM login failed: " +
+  //             (zimError instanceof Error ? zimError.message : "Unknown error")
+  //         );
+  //         setIsLoading(false);
+  //         return;
+  //       }
+
+  //       const zegoInstance = ZegoUIKitPrebuilt.create(token); // Use the fetched token
+  //       zpRef.current = zegoInstance;
+  //       zegoInstance.addPlugins({ ZIM: zimRef });
+
+  //       zegoInstance.joinRoom({
+  //         container: zegoContainer.current,
+  //         scenario: {
+  //           mode: ZegoUIKitPrebuilt.GroupCall,
+  //         },
+  //         turnOnCameraWhenJoining: false,
+  //         turnOnMicrophoneWhenJoining: true,
+  //         showScreenSharingButton: false,
+  //         showRoomTimer: true,
+  //         showUserList: true,
+  //       });
+  //     } catch (error: unknown) {
+  //       if (error instanceof DOMException && error.name === "NotAllowedError") {
+  //         onError("Permission denied for microphone.");
+  //       } else {
+  //         onError(error instanceof Error ? error.message : "Connection failed");
+  //       }
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   if (userId && roomID) {
+  //     myMeeting();
+  //   }
+
+  //   return () => {
+  //     if (zpRef.current) {
+  //       zpRef.current.destroy();
+  //       zpRef.current = null;
+  //     }
+  //     if (zimRef) {
+  //       zimRef.destroy();
+  //       zimRef = null;
+  //     }
+  //   };
+  // }, [userId, roomID, uName, onError]);
 
   useEffect(() => {
-    const initializeZego = async () => {
-      if (!zegoContainer.current || isInitializedRef.current) return;
+    let isMounted = true; // Flag to prevent state updates after unmount
+
+    const myMeeting = async () => {
+      if (!zegoContainer.current) return;
 
       setIsLoading(true);
       try {
-        // Verify environment and permissions
-        if (!window.isSecureContext) {
-          throw new Error("Secure context (HTTPS/localhost) required");
-        }
+        await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        stream.getTracks().forEach((track) => track.stop());
+        const fetchedToken = await fetchToken(userId, roomID);
 
-        // Generate fresh token
-        const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-          APP_ID,
-          SERVER_SECRET,
-          roomID,
-          userId,
-          `${uName}_${userId}`,
-          Math.floor(Date.now() / 1000) + 3600 // Token valid for 1 hour
-        );
+        if (!isMounted) return; // Check if component is still mounted
 
-        // Initialize Zego instance
-        const zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
-
-        // Initialize ZIM and login before joining room
-        if (!zimRef.current) {
-          zimRef.current = ZIM.create({ appID: APP_ID });
-        }
-
-        // Login to ZIM
         try {
-          // await zimRef.current?.login({ userID: userId, token: kitToken });
-        } catch (error) {
-          console.error("ZIM login failed:", error);
-          onError("ZIM login failed: " + (error as Error).message);
-          return; // Stop execution if login fails
+          zimRef.current = ZIM.create({
+            appID: parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || ""),
+          });
+          await zimRef.current?.login(userId, fetchedToken); // Use fetched token or "" in dev
+        } catch (zimError: Error | unknown) {
+          console.error("ZIM Login Error:", zimError);
+          onError(
+            "ZIM login failed: " +
+              (zimError instanceof Error ? zimError.message : "Unknown error")
+          );
+          setIsLoading(false);
+          return;
         }
 
-        zegoInstance.addPlugins({ ZIM });
+        const zegoInstance = ZegoUIKitPrebuilt.create(fetchedToken); // Use fetched token
+        zpRef.current = zegoInstance;
+        zegoInstance.addPlugins({ ZIM: zimRef.current });
 
-        // Configure room settings
-        await zegoInstance.joinRoom({
+        zegoInstance.joinRoom({
           container: zegoContainer.current,
           scenario: {
             mode: ZegoUIKitPrebuilt.GroupCall,
           },
-          turnOnCameraWhenJoining: false,
-          turnOnMicrophoneWhenJoining: true,
-          showAudioVideoSettingsButton: true,
-          showScreenSharingButton: false,
+          turnOnCameraWhenJoining: false, // Adjust as needed
+          turnOnMicrophoneWhenJoining: true, // Adjust as needed
+          showScreenSharingButton: false, // Adjust as needed
           showRoomTimer: true,
           showUserList: true,
-          layout: "Auto",
         });
-
-        setZp(zegoInstance);
-        isInitializedRef.current = true;
-        await handleInvitations(zegoInstance);
-      } catch (error) {
-        handleErrors(error);
+      } catch (error: Error | unknown) {
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          onError("Permission denied for microphone.");
+        } else {
+          onError(error instanceof Error ? error.message : "Connection failed");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          // Check isMounted before setting state
+          setIsLoading(false);
+        }
       }
     };
 
     if (userId && roomID) {
-      initializeZego();
+      myMeeting();
     }
 
     return () => {
-      if (zp) {
-        zp.destroy();
-        if (zimRef.current) {
-          zimRef.current.logout();
-          zimRef.current.destroy();
-        }
-        setZp(null);
-        isInitializedRef.current = false;
+      isMounted = false; // Set isMounted to false on unmount
+      if (zpRef.current) {
+        zpRef.current.destroy();
+        zpRef.current = null;
+      }
+      if (zimRef.current) {
+        zimRef.current.destroy();
+        zimRef.current = null;
       }
     };
-  }, [userId, roomID]);
+  }, [userId, roomID, uName, onError]); // Include onError in dependencies
 
-  const handleErrors = (error: unknown) => {
-    console.error("Error:", error);
-    if (error instanceof DOMException) {
-      onError(
-        error.name === "NotAllowedError"
-          ? "Microphone access required"
-          : "Audio device error"
-      );
-    } else if (error instanceof Error) {
-      onError(error.message);
-    } else {
-      onError("Connection failed");
+  const callMember = (member: { uid: string; name: string }) => {
+    if (!zpRef.current) {
+      onError("Connection not ready");
+      return;
     }
-  };
 
-  const handleInvitations = async (zegoInstance: ZegoUIKitPrebuilt) => {
-    if (!members.length) return;
+    const MAX_RETRIES = 3;
+    let retryCount = 0;
 
-    const INVITATION_DELAY = 2000; // 2 seconds between invites
-    const MAX_RETRIES = 2;
-
-    for (const [index, member] of members.entries()) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, index * INVITATION_DELAY)
-      );
-
-      let attempts = 0;
-      const sendInvite = async () => {
-        try {
-          const response = await zegoInstance.sendCallInvitation({
-            callees: [{ userID: member.uid, userName: member.name }],
-            callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
-            timeout: 60,
-          });
-
-          if (response.errorInvitees.length > 0) {
-            throw new Error("Invitation failed");
-          }
-          console.log("Invitation sent to:", member.name);
-        } catch (error) {
-          console.error("Invitation error:", error);
-          if (attempts++ < MAX_RETRIES) {
-            console.log(`Retrying ${member.name} (attempt ${attempts})`);
-            await new Promise((resolve) =>
-              setTimeout(resolve, 1000 * attempts)
-            );
-            await sendInvite();
-          } else {
-            onError(`Failed to reach ${member.name}`);
-          }
+    const sendInvitation = async () => {
+      try {
+        await zpRef.current!.sendCallInvitation({
+          callees: [{ userID: member.uid, userName: member.name }],
+          callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
+          timeout: 60,
+        });
+        console.log(`Call invitation sent to ${member.name}`);
+      } catch (error: unknown) {
+        console.error(
+          "Error sending invitation:",
+          error instanceof Error ? error.message : String(error)
+        );
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          setTimeout(sendInvitation, 1000);
+        } else {
+          onError(
+            `Failed to call ${member.name} after ${MAX_RETRIES} attempts`
+          );
         }
-      };
+      }
+    };
 
-      await sendInvite();
-    }
+    sendInvitation();
   };
 
   return (
-    <div className="voice-call-container">
-      {isLoading && <div className="loading-text">Initializing call...</div>}
-      <div
-        ref={zegoContainer}
-        style={{
-          width: "100%",
-          height: "500px",
-          backgroundColor: "#1a1a1a",
-          borderRadius: "8px",
-        }}
-      />
+    <div>
+      {isLoading && <div>Connecting...</div>}
+      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
+
+      <div className="member-list">
+        {members.map((member) => (
+          <div key={member.uid} className="member-item">
+            <span>
+              {member.name} ({member.uid})
+            </span>
+            <button onClick={() => callMember(member)} disabled={isLoading}>
+              Call
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default ZegoCloudInvite;
-
-// "use client";
-
-// import { useEffect, useState, useRef } from "react";
-// import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
-// import { ZIM } from "zego-zim-web";
-// import { APP_ID, SERVER_SECRET } from "@/utils/constants";
-
-// interface ZegoCloudInviteProps {
-//   userId: string;
-//   members: { uid: string; name: string }[];
-//   onError: (error: string) => void;
-//   roomID: string;
-//   uName: string;
-// }
-
-// const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
-//   userId,
-//   members,
-//   onError,
-//   roomID,
-//   uName,
-// }) => {
-//   const [zp, setZp] = useState<ZegoUIKitPrebuilt | null>(null);
-//   const zegoContainer = useRef<HTMLDivElement | null>(null);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const zimRef = useRef<ZIM | null>(null);
-//   const isInitializedRef = useRef(false);
-
-//   useEffect(() => {
-//     const initializeZego = async () => {
-//       if (!zegoContainer.current || isInitializedRef.current) return;
-
-//       setIsLoading(true);
-//       try {
-//         // Verify environment and permissions
-//         if (!window.isSecureContext) {
-//           throw new Error("Secure context (HTTPS/localhost) required");
-//         }
-
-//         const stream = await navigator.mediaDevices.getUserMedia({
-//           audio: true,
-//         });
-//         stream.getTracks().forEach((track) => track.stop());
-
-//         // Generate fresh token
-//         const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-//           APP_ID,
-//           SERVER_SECRET,
-//           roomID,
-//           userId,
-//           `${uName}_${userId}`,
-//           Date.now() + 3600 * 1000
-//         );
-
-//         // Initialize Zego instance
-//         const zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
-
-//         // Initialize ZIM and login before joining room
-//         if (!zimRef.current) {
-//           zimRef.current = ZIM.create({ appID: APP_ID });
-//         }
-
-//         zegoInstance.addPlugins({ ZIM });
-
-//         // Configure room settings
-//         await zegoInstance.joinRoom({
-//           container: zegoContainer.current,
-//           scenario: {
-//             mode: ZegoUIKitPrebuilt.GroupCall,
-//           },
-//           turnOnCameraWhenJoining: false,
-//           turnOnMicrophoneWhenJoining: true,
-//           showAudioVideoSettingsButton: true,
-//           showScreenSharingButton: false,
-//           showRoomTimer: true,
-//           showUserList: true,
-//           layout: "Auto",
-//         });
-
-//         setZp(zegoInstance);
-//         isInitializedRef.current = true;
-//         await handleInvitations(zegoInstance);
-//       } catch (error) {
-//         handleErrors(error);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     if (userId && roomID) {
-//       initializeZego();
-//     }
-
-//     return () => {
-//       if (zp) {
-//         zp.destroy();
-//         if (zimRef.current) {
-//           zimRef.current.logout();
-//           zimRef.current.destroy();
-//         }
-//         setZp(null);
-//         isInitializedRef.current = false;
-//       }
-//     };
-//   }, [userId, roomID]);
-
-//   const handleErrors = (error: unknown) => {
-//     console.error("Error:", error);
-//     if (error instanceof DOMException) {
-//       onError(
-//         error.name === "NotAllowedError"
-//           ? "Microphone access required"
-//           : "Audio device error"
-//       );
-//     } else if (error instanceof Error) {
-//       onError(error.message);
-//     } else {
-//       onError("Connection failed");
-//     }
-//   };
-
-//   const handleInvitations = async (zegoInstance: ZegoUIKitPrebuilt) => {
-//     if (!members.length) return;
-
-//     const INVITATION_DELAY = 2000; // 2 seconds between invites
-//     const MAX_RETRIES = 2;
-
-//     for (const [index, member] of members.entries()) {
-//       await new Promise((resolve) =>
-//         setTimeout(resolve, index * INVITATION_DELAY)
-//       );
-
-//       let attempts = 0;
-//       const sendInvite = async () => {
-//         try {
-//           const response = await zegoInstance.sendCallInvitation({
-//             callees: [{ userID: member.uid, userName: member.name }],
-//             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
-//             timeout: 60,
-//           });
-
-//           if (response.errorInvitees.length > 0) {
-//             throw new Error("Invitation failed");
-//           }
-//           console.log("Invitation sent to:", member.name);
-//         } catch (error) {
-//           console.error("Invitation error:", error);
-//           if (attempts++ < MAX_RETRIES) {
-//             console.log(`Retrying ${member.name} (attempt ${attempts})`);
-//             await new Promise((resolve) =>
-//               setTimeout(resolve, 1000 * attempts)
-//             );
-//             await sendInvite();
-//           } else {
-//             onError(`Failed to reach ${member.name}`);
-//           }
-//         }
-//       };
-
-//       await sendInvite();
-//     }
-//   };
-
-//   return (
-//     <div className="voice-call-container">
-//       {isLoading && <div className="loading-text">Initializing call...</div>}
-//       <div
-//         ref={zegoContainer}
-//         style={{
-//           width: "100%",
-//           height: "500px",
-//           backgroundColor: "#1a1a1a",
-//           borderRadius: "8px",
-//         }}
-//       />
-//     </div>
-//   );
-// };
-
-// export default ZegoCloudInvite;
