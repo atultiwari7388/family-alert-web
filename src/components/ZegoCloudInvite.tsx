@@ -67,7 +67,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
           fetchedToken,
           roomID,
           userId,
-          userName
+          userName.trim()
         );
 
         console.log("Generated kitToken:", kitToken);
@@ -150,6 +150,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       {isLoading && <div>Connecting...</div>} {/* Loading indicator */}
       <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
       <div className="member-list">
+        <div>My User Name is {userName}</div>
         {members.map((member) => (
           <div key={member.uid} className="member-item">
             <span>
