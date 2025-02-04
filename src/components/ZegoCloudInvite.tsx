@@ -10,10 +10,6 @@ interface ZegoCloudInviteProps {
   userName: string;
 }
 
-const generateUniqueRoomId = () => {
-  return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
-
 const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   userId,
   members,
@@ -23,7 +19,11 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const zpRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const roomID = generateUniqueRoomId();
+  const [roomID, setRoomID] = useState<string | null>(null);
+
+  const generateUniqueRoomId = () => {
+    return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
 
   const fetchToken = async (userId: string, roomID: string) => {
     try {
@@ -48,9 +48,14 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         "Token fetch failed: " +
           (error instanceof Error ? error.message : "Unknown error")
       );
-      throw error; // Re-throw the error to be caught in useEffect
+      throw error;
     }
   };
+
+  useEffect(() => {
+    const newRoomID = generateUniqueRoomId();
+    setRoomID(newRoomID);
+  }, []);
 
   useEffect(() => {
     const appId = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0", 10);
@@ -68,34 +73,36 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       setIsLoading(true);
 
       try {
-        const fetchedToken = await fetchToken(userId, roomID);
+        if (roomID) {
+          const fetchedToken = await fetchToken(userId, roomID);
 
-        if (!isMounted) return;
+          if (!isMounted) return;
 
-        console.log("Fetched Token (for kitToken):", fetchedToken);
+          console.log("Fetched Token (for kitToken):", fetchedToken);
 
-        const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
-          parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || ""),
-          fetchedToken,
-          roomID,
-          userId,
-          userName.trim()
-        );
+          const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
+            appId, // Use appId directly here
+            fetchedToken,
+            roomID,
+            userId,
+            userName.trim()
+          );
 
-        console.log("Generated kitToken:", kitToken);
+          console.log("Generated kitToken:", kitToken);
 
-        const zp = ZegoUIKitPrebuilt.create(kitToken);
-        zpRef.current = zp;
+          const zp = ZegoUIKitPrebuilt.create(kitToken);
+          zpRef.current = zp;
 
-        zp.joinRoom({
-          container: zegoContainer.current,
-          scenario: { mode: ZegoUIKitPrebuilt.GroupCall },
-          turnOnCameraWhenJoining: false,
-          turnOnMicrophoneWhenJoining: true,
-          showScreenSharingButton: false,
-          showRoomTimer: true,
-          showUserList: true,
-        });
+          zp.joinRoom({
+            container: zegoContainer.current,
+            scenario: { mode: ZegoUIKitPrebuilt.GroupCall },
+            turnOnCameraWhenJoining: false,
+            turnOnMicrophoneWhenJoining: true,
+            showScreenSharingButton: false,
+            showRoomTimer: true,
+            showUserList: true,
+          });
+        }
       } catch (error: Error | unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to join room";
@@ -119,8 +126,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         zpRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, roomID, userName, onError]); // Correct dependencies
+  }, [userId, userName, onError, roomID]);
 
   const callMember = (member: { uid: string; name: string }) => {
     if (!zpRef.current) {
@@ -159,7 +165,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
   return (
     <div>
-      {isLoading && <div>Connecting...</div>} {/* Loading indicator */}
+      {isLoading && <div>Connecting...</div>}
       <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
       <div className="member-list">
         <div>My User Name is {userName}</div>
