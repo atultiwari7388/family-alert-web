@@ -149,11 +149,9 @@ export default function UserDetails({ userId }: { userId: string }) {
         </div>
 
         <ZegoCloudInvite
-          // userData={userData}
           userId={userId}
           members={members}
           onError={setError}
-          roomID={userId}
           userName={`${userData.firstName ?? ""} ${
             userData.lastName ?? ""
           }`.trim()}

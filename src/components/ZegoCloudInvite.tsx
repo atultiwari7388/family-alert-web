@@ -7,20 +7,23 @@ interface ZegoCloudInviteProps {
   userId: string;
   members: { uid: string; name: string }[];
   onError: (error: string) => void;
-  roomID: string;
   userName: string;
 }
+
+const generateUniqueRoomId = () => {
+  return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
 
 const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   userId,
   members,
   onError,
-  roomID,
   userName,
 }) => {
   const zpRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const roomID = generateUniqueRoomId();
 
   const fetchToken = async (userId: string, roomID: string) => {
     try {
