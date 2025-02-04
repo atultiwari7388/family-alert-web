@@ -19,6 +19,11 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [roomID, setRoomID] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isCalling, setIsCalling] = useState(false);
+  const [callingMember, setCallingMember] = useState<{
+    uid: string;
+    name: string;
+  } | null>(null);
 
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -56,10 +61,24 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   };
 
   useEffect(() => {
-    const newRoomID = generateUniqueRoomId();
-    const newUserID = generateUniqueUserId();
-    setRoomID(newRoomID);
-    setUserId(newUserID);
+    const storedRoomID = localStorage.getItem("zego_room_id");
+    const storedUserID = localStorage.getItem("zego_user_id");
+
+    if (storedRoomID) {
+      setRoomID(storedRoomID);
+    } else {
+      const newRoomID = generateUniqueRoomId();
+      setRoomID(newRoomID);
+      localStorage.setItem("zego_room_id", newRoomID);
+    }
+
+    if (storedUserID) {
+      setUserId(storedUserID);
+    } else {
+      const newUserID = generateUniqueUserId();
+      setUserId(newUserID);
+      localStorage.setItem("zego_user_id", newUserID);
+    }
   }, []);
 
   useEffect(() => {
@@ -71,6 +90,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     );
 
     let isMounted = true;
+    let callStarted = false;
 
     const myMeeting = async () => {
       if (!zegoContainer.current) return;
@@ -78,18 +98,18 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       setIsLoading(true);
 
       try {
-        if (roomID) {
-          const fetchedToken = await fetchToken(userId!, roomID);
+        if (roomID && userId) {
+          const fetchedToken = await fetchToken(userId, roomID);
 
           if (!isMounted) return;
 
           console.log("Fetched Token (for kitToken):", fetchedToken);
 
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
-            appId, // Use appId directly here
+            appId,
             fetchedToken,
             roomID,
-            userId!,
+            userId,
             userName.trim()
           );
 
@@ -106,6 +126,12 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             showScreenSharingButton: false,
             showRoomTimer: true,
             showUserList: true,
+            onUserJoin: () => {
+              if (isMounted && !callStarted && members.length > 0) {
+                callStarted = true;
+                startCall(members[0]);
+              }
+            },
           });
         }
       } catch (error: Error | unknown) {
@@ -131,7 +157,21 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         zpRef.current = null;
       }
     };
-  }, [userId, userName, onError, roomID]);
+  }, [userId, userName, onError, roomID, members]);
+
+  const startCall = (member: { uid: string; name: string }) => {
+    setIsCalling(true);
+    setCallingMember(member);
+    callMember(member);
+  };
+
+  const endCall = () => {
+    if (zpRef.current) {
+      zpRef.current.hangUp();
+    }
+    setIsCalling(false);
+    setCallingMember(null);
+  };
 
   const callMember = (member: { uid: string; name: string }) => {
     if (!zpRef.current) {
@@ -171,20 +211,34 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   return (
     <div>
       {isLoading && <div>Connecting...</div>}
-      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
-      <div className="member-list">
-        <div>My User Name is {userName}</div>
-        {members.map((member) => (
-          <div key={member.uid} className="member-item">
-            <span>
-              {member.name} ({member.uid})
-            </span>
-            <button onClick={() => callMember(member)} disabled={isLoading}>
-              Call
-            </button>
-          </div>
-        ))}
-      </div>
+
+      {isCalling && callingMember && (
+        <div className="call-ui">
+          <div>Calling {callingMember.name}...</div>
+          <button onClick={endCall}>End Call</button>
+        </div>
+      )}
+
+      {!isCalling && (
+        <div className="member-list">
+          <div>My User Name is {userName}</div>
+          {members.map((member) => (
+            <div key={member.uid} className="member-item">
+              <span>
+                {member.name} ({member.uid})
+              </span>
+              <button onClick={() => startCall(member)} disabled={isLoading}>
+                Call
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div
+        ref={zegoContainer}
+        style={{ width: "100%", height: "500px", display: "none" }}
+      />
     </div>
   );
 };
