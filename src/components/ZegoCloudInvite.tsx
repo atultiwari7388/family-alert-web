@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
+import { ZIM } from "zego-zim-web";
 
 interface ZegoCloudInviteProps {
   members: { uid: string; name: string }[];
@@ -24,6 +25,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     uid: string;
     name: string;
   } | null>(null);
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
 
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -91,6 +93,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
     let isMounted = true;
     let callStarted = false;
+    let zp: ZegoUIKitPrebuilt | null = null;
 
     const myMeeting = async () => {
       if (!zegoContainer.current) return;
@@ -103,8 +106,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
           if (!isMounted) return;
 
-          console.log("Fetched Token (for kitToken):", fetchedToken);
-
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
             appId,
             fetchedToken,
@@ -113,10 +114,10 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             userName.trim()
           );
 
-          console.log("Generated kitToken:", kitToken);
-
-          const zp = ZegoUIKitPrebuilt.create(kitToken);
+          zp = ZegoUIKitPrebuilt.create(kitToken);
           zpRef.current = zp;
+
+          zp.addPlugins({ ZIM });
 
           zp.joinRoom({
             container: zegoContainer.current,
@@ -136,8 +137,10 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         }
       } catch (error: Error | unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "Failed to join room";
-        console.error("Error joining room:", error);
+          error instanceof Error
+            ? error.message
+            : "Failed to join room or initialize ZIM: " + String(error);
+        console.error("Error:", error);
         onError(errorMessage);
       } finally {
         if (isMounted) {
@@ -156,6 +159,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         zpRef.current.destroy();
         zpRef.current = null;
       }
+      zp = null;
     };
   }, [userId, userName, onError, roomID, members]);
 
@@ -173,39 +177,52 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     setCallingMember(null);
   };
 
-  const callMember = (member: { uid: string; name: string }) => {
+  const callMember = async (member: { uid: string; name: string }) => {
     if (!zpRef.current) {
       onError("Connection not ready");
       return;
     }
 
-    const MAX_RETRIES = 3;
-    let retryCount = 0;
+    if (isSendingInvitation) {
+      return;
+    }
 
-    const sendInvitation = async () => {
-      try {
-        await zpRef.current!.sendCallInvitation({
-          callees: [{ userID: member.uid, userName: member.name }],
-          callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
-          timeout: 60,
-        });
-        console.log(`Call invitation sent to ${member.name}`);
-      } catch (error: Error | unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        console.error("Error sending invitation:", errorMessage);
-        if (retryCount < MAX_RETRIES) {
-          retryCount++;
-          setTimeout(sendInvitation, 1000);
-        } else {
-          onError(
-            `Failed to call ${member.name} after ${MAX_RETRIES} attempts`
-          );
+    setIsSendingInvitation(true);
+
+    try {
+      const MAX_RETRIES = 3;
+      let retryCount = 0;
+
+      const sendInvitation = async () => {
+        try {
+          await zpRef.current!.sendCallInvitation({
+            callees: [{ userID: member.uid, userName: member.name }],
+            callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
+            timeout: 60,
+          });
+          console.log(`Call invitation sent to ${member.name}`);
+        } catch (error: Error | unknown) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.error("Error sending invitation:", errorMessage);
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            setTimeout(sendInvitation, 1000);
+          } else {
+            onError(
+              `Failed to call ${member.name} after ${MAX_RETRIES} attempts`
+            );
+          }
         }
-      }
-    };
+      };
 
-    sendInvitation();
+      await sendInvitation();
+    } catch (error) {
+      console.error("Error in callMember:", error);
+      onError("An error occurred while calling.");
+    } finally {
+      setIsSendingInvitation(false);
+    }
   };
 
   return (
@@ -227,7 +244,10 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
               <span>
                 {member.name} ({member.uid})
               </span>
-              <button onClick={() => startCall(member)} disabled={isLoading}>
+              <button
+                onClick={() => startCall(member)}
+                disabled={isLoading || isSendingInvitation}
+              >
                 Call
               </button>
             </div>
