@@ -154,7 +154,7 @@ export default function UserDetails({ userId }: { userId: string }) {
           members={members}
           onError={setError}
           roomID={userId}
-          uName={`${userData.firstName ?? ""} ${
+          userName={`${userData.firstName ?? ""} ${
             userData.lastName ?? ""
           }`.trim()}
         />
