@@ -131,76 +131,153 @@ function generateToken04(
 }
 
 // Next.js API route
+// export async function GET(req: NextRequest) {
+//   try {
+//     const { searchParams } = new URL(req.url);
+//     const userID = searchParams.get("userID");
+//     const roomID = searchParams.get("roomID");
+
+//     if (!userID || !roomID) {
+//       return new NextResponse(JSON.stringify({ error: "Missing parameters" }), {
+//         status: 400,
+//         headers: { "Content-Type": "application/json" },
+//       });
+//     }
+
+//     const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "");
+//     const secret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET || "";
+
+//     if (isNaN(appID)) {
+//       console.error("ZEGO_APP_ID is not a valid number");
+//       return new NextResponse(JSON.stringify({ error: "Invalid App ID" }), {
+//         status: 500,
+//         headers: { "Content-Type": "application/json" },
+//       });
+//     }
+
+//     if (!secret || secret.length !== 32) {
+//       // Check secret length
+//       console.error("ZEGO_SERVER_SECRET is missing or invalid");
+//       return new NextResponse(
+//         JSON.stringify({ error: "Missing or Invalid Server Secret" }),
+//         {
+//           status: 500,
+//           headers: { "Content-Type": "application/json" },
+//         }
+//       );
+//     }
+
+//     const payloadObject = {
+//       room_id: roomID,
+//       privilege: { 1: 1, 2: 0 },
+//       stream_id_list: null,
+//     };
+//     const payload = JSON.stringify(payloadObject);
+
+//     const effectiveTimeInSeconds = 3600;
+
+//     const token = generateToken04(
+//       appID,
+//       userID,
+//       secret,
+//       effectiveTimeInSeconds,
+//       payload
+//     );
+
+//     console.log("Generated Token:", token); // Log the generated token
+
+//     return new NextResponse(JSON.stringify({ token }), {
+//       status: 200,
+//       headers: { "Content-Type": "application/json" },
+//     });
+//   } catch (error: unknown) {
+//     console.error("Token API error:", error);
+//     return new NextResponse(
+//       JSON.stringify({
+//         error:
+//           error instanceof Error ? error.message : "Token generation failed",
+//       }),
+//       {
+//         status: 500,
+//         headers: { "Content-Type": "application/json" },
+//       }
+//     );
+//   }
+// }
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userID = searchParams.get("userID");
     const roomID = searchParams.get("roomID");
 
+    // Enhanced validation
     if (!userID || !roomID) {
-      return new NextResponse(JSON.stringify({ error: "Missing parameters" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new NextResponse(
+        JSON.stringify({ error: "Missing userID or roomID" }),
+        { status: 400 }
+      );
+    }
+
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(userID)) {
+      return new NextResponse(
+        JSON.stringify({ error: "Invalid userID format" }),
+        { status: 400 }
+      );
     }
 
     const appID = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "");
-    const secret = process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET || "";
+    const secret = process.env.ZEGO_SERVER_SECRET || "";
 
     if (isNaN(appID)) {
-      console.error("ZEGO_APP_ID is not a valid number");
-      return new NextResponse(JSON.stringify({ error: "Invalid App ID" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new NextResponse(
+        JSON.stringify({ error: "Invalid App ID configuration" }),
+        { status: 500 }
+      );
     }
 
-    if (!secret || secret.length !== 32) {
-      // Check secret length
-      console.error("ZEGO_SERVER_SECRET is missing or invalid");
+    if (secret.length !== 32) {
       return new NextResponse(
-        JSON.stringify({ error: "Missing or Invalid Server Secret" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "Invalid server secret configuration" }),
+        { status: 500 }
       );
     }
 
     const payloadObject = {
       room_id: roomID,
-      privilege: { 1: 1, 2: 0 },
+      privilege: {
+        1: 1, // Enable login
+        2: 1, // Enable publish
+      },
       stream_id_list: null,
     };
-    const payload = JSON.stringify(payloadObject);
 
-    const effectiveTimeInSeconds = 3600;
-
+    const effectiveTimeInSeconds = 3600 * 24; // 24 hours
     const token = generateToken04(
       appID,
       userID,
       secret,
       effectiveTimeInSeconds,
-      payload
+      JSON.stringify(payloadObject)
     );
 
-    console.log("Generated Token:", token); // Log the generated token
-
-    return new NextResponse(JSON.stringify({ token }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ token });
   } catch (error: unknown) {
-    console.error("Token API error:", error);
-    return new NextResponse(
-      JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Token generation failed",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    console.error("Token generation error:", error);
+    if (
+      error instanceof Error &&
+      "errorCode" in error &&
+      "errorMessage" in error
+    ) {
+      const zegoError = {
+        errorCode: error.errorCode as ErrorCode,
+        errorMessage: error.errorMessage as string,
+      };
+      return NextResponse.json(zegoError, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }

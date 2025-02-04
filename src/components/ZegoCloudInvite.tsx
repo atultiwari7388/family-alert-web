@@ -25,7 +25,8 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const fetchToken = async (userId: string, roomID: string) => {
     try {
       const response = await fetch(
-        `/api/token?userID=${userId}&roomID=${roomID}`
+        `/api/token?userID=${userId}&roomID=${roomID}`,
+        { method: "GET" }
       );
 
       if (!response.ok) {
@@ -36,6 +37,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       }
 
       const data = await response.json();
+      console.log("Fetched Data Token:", data.token);
       return data.token;
     } catch (error: unknown) {
       console.error("Token error:", error);
@@ -48,6 +50,13 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   };
 
   useEffect(() => {
+    const appId = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0", 10);
+    console.log("Zego App Id", appId);
+    console.log(
+      "Zego App Secret Key",
+      process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET
+    );
+
     let isMounted = true;
 
     const myMeeting = async () => {
@@ -61,15 +70,13 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         if (!isMounted) return;
 
         console.log("Fetched Token (for kitToken):", fetchedToken);
-        const hardCodedUserName = "Kalua Don";
 
         const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
           parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || ""),
           fetchedToken,
           roomID,
           userId,
-          hardCodedUserName
-          // userName.trim()
+          userName.trim()
         );
 
         console.log("Generated kitToken:", kitToken);
