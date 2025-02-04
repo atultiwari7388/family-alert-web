@@ -1,3 +1,5 @@
+//new code
+
 import { NextRequest, NextResponse } from "next/server";
 import { createCipheriv, randomBytes } from "crypto";
 
@@ -203,6 +205,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
+//previous code
 // import { NextRequest, NextResponse } from "next/server";
 // import crypto from "crypto";
 
