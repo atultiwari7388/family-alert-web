@@ -61,13 +61,15 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         if (!isMounted) return;
 
         console.log("Fetched Token (for kitToken):", fetchedToken);
+        const hardCodedUserName = "Kalua Don";
 
         const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
           parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || ""),
           fetchedToken,
           roomID,
           userId,
-          userName.trim()
+          hardCodedUserName
+          // userName.trim()
         );
 
         console.log("Generated kitToken:", kitToken);
