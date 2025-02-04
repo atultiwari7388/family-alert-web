@@ -4,14 +4,12 @@ import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 
 interface ZegoCloudInviteProps {
-  userId: string;
   members: { uid: string; name: string }[];
   onError: (error: string) => void;
   userName: string;
 }
 
 const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
-  userId,
   members,
   onError,
   userName,
@@ -20,9 +18,14 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [roomID, setRoomID] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  const generateUniqueUserId = () => {
+    return `userID_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
   const fetchToken = async (userId: string, roomID: string) => {
@@ -54,7 +57,9 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
   useEffect(() => {
     const newRoomID = generateUniqueRoomId();
+    const newUserID = generateUniqueUserId();
     setRoomID(newRoomID);
+    setUserId(newUserID);
   }, []);
 
   useEffect(() => {
@@ -74,7 +79,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
       try {
         if (roomID) {
-          const fetchedToken = await fetchToken(userId, roomID);
+          const fetchedToken = await fetchToken(userId!, roomID);
 
           if (!isMounted) return;
 
@@ -84,7 +89,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             appId, // Use appId directly here
             fetchedToken,
             roomID,
-            userId,
+            userId!,
             userName.trim()
           );
 
