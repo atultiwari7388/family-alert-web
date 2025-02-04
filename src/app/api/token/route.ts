@@ -10,16 +10,6 @@ const enum ErrorCode {
   effectiveTimeInSecondsInvalid = 6,
 }
 
-// const enum KPrivilegeKey {
-//   PrivilegeKeyLogin = 1,
-//   PrivilegeKeyPublish = 2,
-// }
-
-// const enum KPrivilegeVal {
-//   PrivilegeEnable = 1,
-//   PrivilegeDisable = 0,
-// }
-
 const enum AesEncryptMode {
   CBCPKCS5Padding = 0,
   GCM = 1,
@@ -68,7 +58,7 @@ function createError(errorCode: number, errorMessage: string): ErrorInfo {
 }
 
 // Token generation function (from Zego example)
-export function generateToken04(
+function generateToken04(
   appId: number,
   userId: string,
   secret: string,
