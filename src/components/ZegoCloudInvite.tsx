@@ -111,7 +111,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             container: zegoContainer.current,
             scenario: { mode: ZegoUIKitPrebuilt.GroupCall },
             turnOnCameraWhenJoining: false,
-            turnOnMicrophoneWhenJoining: true,
+            turnOnMicrophoneWhenJoining: false,
             showScreenSharingButton: false,
             showRoomTimer: true,
             showUserList: true,
