@@ -21,7 +21,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [roomID, setRoomID] = useState<string | null>(null);
-  // const [userId, setUserId] = useState<string | null>(null);
   const [isCalling, setIsCalling] = useState(false);
   const [callingMember, setCallingMember] = useState<{
     uid: string;
@@ -32,10 +31,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
-
-  // const generateUniqueUserId = () => {
-  //   return `userID_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  // };
 
   const fetchToken = async (userId: string, roomID: string) => {
     try {
@@ -74,14 +69,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       setRoomID(newRoomID);
       localStorage.setItem("zego_room_id", newRoomID);
     }
-
-    // if (storedUserID) {
-    //   setUserId(storedUserID);
-    // } else {
-    //   const newUserID = generateUniqueUserId();
-    //   setUserId(newUserID);
-    //   localStorage.setItem("zego_user_id", newUserID);
-    // }
   }, []);
 
   useEffect(() => {
