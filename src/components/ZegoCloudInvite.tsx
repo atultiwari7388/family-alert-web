@@ -247,7 +247,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
               <button
                 onClick={() => startCall(member)}
                 disabled={isLoading || isSendingInvitation}
-                className="bg-blue-500"
+                className="bg-blue-500 rounded-sm"
               >
                 Call
               </button>
