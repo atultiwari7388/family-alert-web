@@ -8,18 +8,20 @@ interface ZegoCloudInviteProps {
   members: { uid: string; name: string }[];
   onError: (error: string) => void;
   userName: string;
+  userId: string;
 }
 
 const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   members,
   onError,
   userName,
+  userId,
 }) => {
   const zpRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [roomID, setRoomID] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  // const [userId, setUserId] = useState<string | null>(null);
   const [isCalling, setIsCalling] = useState(false);
   const [callingMember, setCallingMember] = useState<{
     uid: string;
@@ -31,9 +33,9 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const generateUniqueUserId = () => {
-    return `userID_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
+  // const generateUniqueUserId = () => {
+  //   return `userID_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // };
 
   const fetchToken = async (userId: string, roomID: string) => {
     try {
@@ -64,7 +66,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
   useEffect(() => {
     const storedRoomID = localStorage.getItem("zego_room_id");
-    const storedUserID = localStorage.getItem("zego_user_id");
 
     if (storedRoomID) {
       setRoomID(storedRoomID);
@@ -74,13 +75,13 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       localStorage.setItem("zego_room_id", newRoomID);
     }
 
-    if (storedUserID) {
-      setUserId(storedUserID);
-    } else {
-      const newUserID = generateUniqueUserId();
-      setUserId(newUserID);
-      localStorage.setItem("zego_user_id", newUserID);
-    }
+    // if (storedUserID) {
+    //   setUserId(storedUserID);
+    // } else {
+    //   const newUserID = generateUniqueUserId();
+    //   setUserId(newUserID);
+    //   localStorage.setItem("zego_user_id", newUserID);
+    // }
   }, []);
 
   useEffect(() => {
