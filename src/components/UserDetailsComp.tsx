@@ -59,7 +59,9 @@ export default function UserDetails({ userId }: { userId: string }) {
               const vehicleGroupSnap = await getDoc(vehicleGroupRef);
               if (
                 vehicleGroupSnap.exists() &&
-                vehicleGroupSnap.data().admin === userId
+                vehicleGroupSnap.data().admin === userId &&
+                //check group is primary or not
+                vehicleGroupSnap.data().isPrimary === true
               ) {
                 return vehicleGroupRef;
               }
@@ -101,6 +103,8 @@ export default function UserDetails({ userId }: { userId: string }) {
 
           const allMembers = (await Promise.all(memberPromises)).flat();
           setMembers(allMembers);
+
+          console.log("All Members List", allMembers);
         }
       } catch (error) {
         console.error("Error fetching user or members:", error);

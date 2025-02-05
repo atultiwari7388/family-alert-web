@@ -213,6 +213,48 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     }
   };
 
+  if (members) {
+  }
+
+  // return (
+  //   <div>
+  //     {isLoading && <div>Connecting...</div>}
+
+  //     {isCalling && callingMember && (
+  //       <div className="call-ui">
+  //         <div>Calling {callingMember.name}...</div>
+  //         <button onClick={endCall}>End Call</button>
+  //       </div>
+  //     )}
+
+  //     {!isCalling && (
+  //       <div className="member-list">
+  //         <div>My User Name is {userName}</div>
+  //         <div>My Members List</div>
+  //         {members.map((member) => (
+  //           <div key={member.uid} className="member-item">
+  //             <span>
+  //               {member.name} ({member.uid})
+  //             </span>
+  //             {/* <button
+  //               onClick={() => startCall(member)}
+  //               disabled={isLoading || isSendingInvitation}
+  //               className="bg-blue-500 rounded-sm"
+  //             >
+  //               Call
+  //             </button> */}
+  //           </div>
+  //         ))}
+  //       </div>
+  //     )}
+
+  //     <div
+  //       ref={zegoContainer}
+  //       style={{ width: "100%", height: "500px", display: "none" }}
+  //     />
+  //   </div>
+  // );
+
   return (
     <div>
       {isLoading && <div>Connecting...</div>}
@@ -228,20 +270,22 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         <div className="member-list">
           <div>My User Name is {userName}</div>
           <div>My Members List</div>
-          {members.map((member) => (
-            <div key={member.uid} className="member-item">
-              <span>
-                {member.name} ({member.uid})
-              </span>
-              {/* <button
-                onClick={() => startCall(member)}
-                disabled={isLoading || isSendingInvitation}
-                className="bg-blue-500 rounded-sm"
-              >
-                Call
-              </button> */}
+
+          {members.length === 0 ? ( // Check if members array is empty
+            <div>
+              Please select a primary group first or add members to the existing
+              group. {/* Display your custom message */}
             </div>
-          ))}
+          ) : (
+            members.map((member) => (
+              <div key={member.uid} className="member-item">
+                <span>
+                  {member.name} ({member.uid})
+                </span>
+                {/* ... (Call button - if needed) */}
+              </div>
+            ))
+          )}
         </div>
       )}
 
