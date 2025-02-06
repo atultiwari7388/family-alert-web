@@ -289,10 +289,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
         </div>
       )}
 
-      <div
-        ref={zegoContainer}
-        style={{ width: "100%", height: "500px", display: "none" }}
-      />
+      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
     </div>
   );
 };
