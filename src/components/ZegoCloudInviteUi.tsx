@@ -1,7 +1,7 @@
 // components/ZegoCloudInviteUI.tsx
 "use client";
 
-import { useZegoCloud } from "../hooks/useZegoCloud";
+import { useZegoCloud } from "../lib/hooks/useZegoCloud";
 
 interface Member {
   uid: string;

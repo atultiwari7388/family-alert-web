@@ -28,7 +28,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/app/api/token/route.ts",
-    "src/hooks/useZegoCloud.ts"
+    "src/lib/hooks/useZegoCloud.ts"
   ],
   "exclude": ["node_modules"]
 }
