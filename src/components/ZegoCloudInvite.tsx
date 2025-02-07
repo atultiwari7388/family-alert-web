@@ -109,12 +109,24 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
           zp.joinRoom({
             container: zegoContainer.current,
-            scenario: { mode: ZegoUIKitPrebuilt.GroupCall },
-            turnOnCameraWhenJoining: false,
-            turnOnMicrophoneWhenJoining: false,
-            showScreenSharingButton: false,
-            showRoomTimer: true,
+            // <--- Configuration object is here
+            turnOnMicrophoneWhenJoining: false, // Set to true if needed
+            turnOnCameraWhenJoining: false, // Set to true if needed
+            showMyCameraToggleButton: true,
+            showMyMicrophoneToggleButton: true,
+            showAudioVideoSettingsButton: true,
+            showScreenSharingButton: true,
+            showTextChat: true,
             showUserList: true,
+            maxUsers: 50, // Or your desired max users
+            layout: "Sidebar", // Or "Grid"
+            showLayoutButton: true,
+            scenario: {
+              mode: ZegoUIKitPrebuilt.OneONoneCall,
+              config: {
+                role: ZegoUIKitPrebuilt.Host,
+              },
+            },
             onUserJoin: () => {
               if (isMounted && !callStarted && members.length > 0) {
                 callStarted = true;
