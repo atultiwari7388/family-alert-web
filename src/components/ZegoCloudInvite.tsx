@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
+import { ZegoUIKitPrebuilt, ZegoUser } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
 
 interface ZegoCloudInviteProps {
@@ -72,27 +72,36 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   }, []);
 
   useEffect(() => {
+    console.log("ref", zpRef);
     const appId = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0", 10);
-    console.log("Zego App Id", appId);
-    console.log(
-      "Zego App Secret Key",
-      process.env.NEXT_PUBLIC_ZEGO_SERVER_SECRET
-    );
+    console.log("[Debug] Starting initialization with AppID:", appId);
 
     let isMounted = true;
-    let callStarted = false;
+    // let callStarted = false;
     let zp: ZegoUIKitPrebuilt | null = null;
 
     const myMeeting = async () => {
-      if (!zegoContainer.current) return;
+      console.log(
+        "[Debug] myMeeting called, container:",
+        !!zegoContainer.current
+      );
+      if (!zegoContainer.current || !isMounted) {
+        console.log("[Debug] Container not ready or component unmounted");
+        return;
+      }
 
       setIsLoading(true);
 
       try {
         if (roomID && userId) {
+          console.log("[Debug] Fetching token for roomID:", roomID);
           const fetchedToken = await fetchToken(userId, roomID);
+          console.log("[Debug] Token fetched successfully");
 
-          if (!isMounted) return;
+          if (!isMounted) {
+            console.log("[Debug] Component unmounted during token fetch");
+            return;
+          }
 
           const kitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
             appId,
@@ -101,47 +110,23 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             userId,
             userName.trim()
           );
+          console.log("[Debug] Kit token generated");
+
+          if (!isMounted) {
+            console.log("[Debug] Component unmounted before Zego creation");
+            return;
+          }
 
           zp = ZegoUIKitPrebuilt.create(kitToken);
           zpRef.current = zp;
-
           zp.addPlugins({ ZIM });
-
-          zp.joinRoom({
-            container: zegoContainer.current,
-            // <--- Configuration object is here
-            turnOnMicrophoneWhenJoining: false, // Set to true if needed
-            turnOnCameraWhenJoining: false, // Set to true if needed
-            showMyCameraToggleButton: true,
-            showMyMicrophoneToggleButton: true,
-            showAudioVideoSettingsButton: true,
-            showScreenSharingButton: true,
-            showTextChat: true,
-            showUserList: true,
-            maxUsers: 50, // Or your desired max users
-            layout: "Sidebar", // Or "Grid"
-            showLayoutButton: true,
-            scenario: {
-              mode: ZegoUIKitPrebuilt.OneONoneCall,
-              config: {
-                role: ZegoUIKitPrebuilt.Host,
-              },
-            },
-            onUserJoin: () => {
-              if (isMounted && !callStarted && members.length > 0) {
-                callStarted = true;
-                startCall(members[0]);
-              }
-            },
-          });
+          console.log("[Debug] ZegoUIKitPrebuilt created and assigned to ref");
         }
-      } catch (error: Error | unknown) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to join room or initialize ZIM: " + String(error);
-        console.error("Error:", error);
-        onError(errorMessage);
+      } catch (error) {
+        console.error("[Debug] Error in myMeeting:", error);
+        if (isMounted) {
+          onError(error instanceof Error ? error.message : String(error));
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -150,23 +135,29 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     };
 
     if (userId && roomID) {
-      myMeeting();
+      console.log("[Debug] Calling myMeeting with userId:", userId);
+      myMeeting().catch((error) => {
+        console.error("[Debug] Unhandled error in myMeeting:", error);
+      });
     }
 
     return () => {
+      console.log("[Debug] Starting cleanup");
       isMounted = false;
       if (zpRef.current) {
+        console.log("[Debug] Destroying Zego instance");
         zpRef.current.destroy();
         zpRef.current = null;
       }
       zp = null;
+      console.log("[Debug] Cleanup complete");
     };
   }, [userId, userName, onError, roomID, members]);
 
-  const startCall = (member: { uid: string; name: string }) => {
+  const startCall = (members: { uid: string; name: string }[]) => {
     setIsCalling(true);
-    setCallingMember(member);
-    callMember(member);
+    console.log("Calling members", members);
+    callMembers(members);
   };
 
   const endCall = () => {
@@ -177,11 +168,8 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     setCallingMember(null);
   };
 
-  const callMember = async (member: { uid: string; name: string }) => {
-    if (!zpRef.current) {
-      onError("Connection not ready");
-      return;
-    }
+  const callMembers = async (members: { uid: string; name: string }[]) => {
+    console.log("[Debug] callMembers called, zpRef.current:", !!zpRef.current);
 
     if (isSendingInvitation) {
       return;
@@ -192,15 +180,19 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     try {
       const MAX_RETRIES = 3;
       let retryCount = 0;
-
+      // convert member array to ZegoUser array
+      const zegoUsers: ZegoUser[] = members.map((member) => ({
+        userID: member.uid,
+        userName: member.name,
+      }));
       const sendInvitation = async () => {
         try {
           await zpRef.current!.sendCallInvitation({
-            callees: [{ userID: member.uid, userName: member.name }],
+            callees: zegoUsers,
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
           });
-          console.log(`Call invitation sent to ${member.name}`);
+          console.log(`Call invitation sent to ${members.length} members`);
         } catch (error: Error | unknown) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
@@ -209,16 +201,14 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             retryCount++;
             setTimeout(sendInvitation, 1000);
           } else {
-            onError(
-              `Failed to call ${member.name} after ${MAX_RETRIES} attempts`
-            );
+            onError(`Failed to call members after ${MAX_RETRIES} attempts`);
           }
         }
       };
 
       await sendInvitation();
     } catch (error) {
-      console.error("Error in callMember:", error);
+      console.error("Error in callMembers:", error);
       onError("An error occurred while calling.");
     } finally {
       setIsSendingInvitation(false);
@@ -227,45 +217,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 
   if (members) {
   }
-
-  // return (
-  //   <div>
-  //     {isLoading && <div>Connecting...</div>}
-
-  //     {isCalling && callingMember && (
-  //       <div className="call-ui">
-  //         <div>Calling {callingMember.name}...</div>
-  //         <button onClick={endCall}>End Call</button>
-  //       </div>
-  //     )}
-
-  //     {!isCalling && (
-  //       <div className="member-list">
-  //         <div>My User Name is {userName}</div>
-  //         <div>My Members List</div>
-  //         {members.map((member) => (
-  //           <div key={member.uid} className="member-item">
-  //             <span>
-  //               {member.name} ({member.uid})
-  //             </span>
-  //             {/* <button
-  //               onClick={() => startCall(member)}
-  //               disabled={isLoading || isSendingInvitation}
-  //               className="bg-blue-500 rounded-sm"
-  //             >
-  //               Call
-  //             </button> */}
-  //           </div>
-  //         ))}
-  //       </div>
-  //     )}
-
-  //     <div
-  //       ref={zegoContainer}
-  //       style={{ width: "100%", height: "500px", display: "none" }}
-  //     />
-  //   </div>
-  // );
 
   return (
     <div>
@@ -294,16 +245,16 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
                 <span>
                   {member.name} ({member.uid})
                 </span>
-                <button
-                  onClick={() => startCall(member)} // Call startCall for this member
-                  disabled={isLoading || isSendingInvitation}
-                  className="bg-blue-500 rounded-sm"
-                >
-                  Call
-                </button>
               </div>
             ))
           )}
+          <button
+            onClick={() => startCall(members)}
+            disabled={isLoading || isSendingInvitation}
+            className="bg-blue-500 rounded-sm"
+          >
+            Call All
+          </button>
         </div>
       )}
 
