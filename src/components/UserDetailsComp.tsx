@@ -145,9 +145,6 @@ export default function UserDetails({ userId }: { userId: string }) {
     <div className="h-screen w-full flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md p-4 sm:p-6 rounded-2xl relative flex flex-col justify-between min-h-[80vh] sm:min-h-[600px]">
         <div className="text-center mt-8 sm:mt-4">
-          <h1 className="text-base sm:text-lg font-bold mb-2 sm:mb-4">
-            Family Alert
-          </h1>
           <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-8">
             {`${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim()}
             &apos;s Group Call
