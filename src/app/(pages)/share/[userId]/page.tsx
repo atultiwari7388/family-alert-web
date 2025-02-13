@@ -1,7 +1,7 @@
 import UserDetails from "@/components/UserDetailsComp";
 
 export const metadata = {
-  title: "Mylex Infotech - User Details",
+  title: "Welcome to Family Alert",
 };
 
 export default async function UserPage({
