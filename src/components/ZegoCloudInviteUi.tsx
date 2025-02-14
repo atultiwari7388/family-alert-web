@@ -1,8 +1,8 @@
-// components/ZegoCloudInviteUI.tsx
 "use client";
 
 import { useZegoCloud } from "@/lib/hooks/useZegoCloud";
 import { MdCallEnd, MdOutlineCall } from "react-icons/md";
+import { useState } from "react";
 
 interface Member {
   uid: string;
@@ -31,13 +31,25 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
     zegoContainer,
   } = useZegoCloud({ onError, userName, userId });
 
+  // New state to track call status
+  const [callEnded, setCallEnded] = useState(false);
+
+  const handleEndCall = () => {
+    endCall();
+    setCallEnded(true); // Mark call as ended
+  };
+
   return (
     <div className="">
       {isLoading && <div className="text-gray-500">Connecting...</div>}
 
       <div className="w-full">
-        {/* Members List */}
-        {members.length === 0 ? (
+        {/* Show "Call Cancelled" if the call is ended */}
+        {callEnded ? (
+          <div className="text-gray-600 text-center text-lg font-semibold">
+            Call Cancelled
+          </div>
+        ) : members.length === 0 ? (
           <div className="text-gray-600 text-center">
             Please select a primary group first or add members to the existing
             group.
@@ -60,9 +72,8 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
                   {/* Right-aligned Call Icon */}
                   <button
-                    className={`p-2 rounded-full transition-all duration-300 ${
-                      isCalling ? "bg-[#FF4545]" : "bg-[#45DA4A]"
-                    }`}
+                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "bg-[#FF4545]" : "bg-[#45DA4A]"
+                      }`}
                   >
                     {isCalling ? (
                       <MdCallEnd className="text-white text-lg" />
@@ -78,26 +89,29 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
       </div>
 
       {/* Group Call Controls */}
-      <div className="w-full fixed bottom-6 flex justify-center">
-        {!isCalling && members.length > 0 ? (
-          <button
-            onClick={() => startCall(members)}
-            disabled={isLoading || isSendingInvitation}
-            className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
-          >
-            {isSendingInvitation ? "Calling..." : "Start Group Call"}
-          </button>
-        ) : (
-          <button
-            onClick={endCall}
-            className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
-          >
-            End Group Call
-          </button>
-        )}
-      </div>
+      {!callEnded && (
+        <div className="w-full fixed bottom-6 flex justify-center">
+          {!isCalling && members.length > 0 ? (
+            <button
+              onClick={() => startCall(members)}
+              disabled={isLoading || isSendingInvitation}
+              className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
+            >
+              {isSendingInvitation ? "Calling..." : "Start Group Call"}
+            </button>
+          ) : (
+            <button
+              onClick={handleEndCall}
+              className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
+            >
+              End Group Call
+            </button>
+          )}
+        </div>
+      )}
 
-      <div ref={zegoContainer} className="w-full h-[500px]" />
+      {/* Video Call Container */}
+      {!callEnded && <div ref={zegoContainer} className="w-full h-[500px]" />}
     </div>
   );
 };
