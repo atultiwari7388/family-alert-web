@@ -1,7 +1,7 @@
 "use client";
 
 import { useZegoCloud } from "@/lib/hooks/useZegoCloud";
-import { MdCallEnd, MdOutlineCall } from "react-icons/md";
+import { MdOutlineCall } from "react-icons/md";
 import { useState } from "react";
 
 interface Member {
@@ -72,11 +72,12 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
                   {/* Right-aligned Call Icon */}
                   <button
-                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "bg-[#FF4545]" : "bg-[#45DA4A]"
+                    className={`p-2 rounded-full transition-all duration-300 bg-[#45DA4A]
                       }`}
                   >
                     {isCalling ? (
-                      <MdCallEnd className="text-white text-lg" />
+                      // <MdCallEnd className="text-white text-lg" />
+                      <div></div>
                     ) : (
                       <MdOutlineCall className="text-white text-lg" />
                     )}
@@ -100,12 +101,13 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {isSendingInvitation ? "Calling..." : "Start Group Call"}
             </button>
           ) : (
-            <button
-              onClick={handleEndCall}
-              className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
-            >
-              End Group Call
-            </button>
+            <div onClick={handleEndCall}></div>
+            // <button
+            //   onClick={handleEndCall}
+            //   className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
+            // >
+            //   End Group Call
+            // </button>
           )}
         </div>
       )}
