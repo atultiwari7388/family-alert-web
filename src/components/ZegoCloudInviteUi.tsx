@@ -1,8 +1,9 @@
 "use client";
 
 import { useZegoCloud } from "@/lib/hooks/useZegoCloud";
-import { MdOutlineCall } from "react-icons/md";
+import { MdCallEnd, MdOutlineCall } from "react-icons/md";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Member {
   uid: string;
@@ -33,10 +34,13 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
   // New state to track call status
   const [callEnded, setCallEnded] = useState(false);
+  const router = useRouter();
 
   const handleEndCall = () => {
     endCall();
     setCallEnded(true); // Mark call as ended
+    // TODO: Redirect to the home page
+    router.push("/");
   };
 
   return (
@@ -72,12 +76,11 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
                   {/* Right-aligned Call Icon */}
                   <button
-                    className={`p-2 rounded-full transition-all duration-300 bg-[#45DA4A]
+                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "bg-[#FF4545]" : "bg-[#45DA4A]"
                       }`}
                   >
                     {isCalling ? (
-                      // <MdCallEnd className="text-white text-lg" />
-                      <div></div>
+                      <MdCallEnd className="text-white text-lg" />
                     ) : (
                       <MdOutlineCall className="text-white text-lg" />
                     )}
@@ -101,13 +104,12 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {isSendingInvitation ? "Calling..." : "Start Group Call"}
             </button>
           ) : (
-            <div onClick={handleEndCall}></div>
-            // <button
-            //   onClick={handleEndCall}
-            //   className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
-            // >
-            //   End Group Call
-            // </button>
+            <button
+              onClick={handleEndCall}
+              className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
+            >
+              End Group Call
+            </button>
           )}
         </div>
       )}
