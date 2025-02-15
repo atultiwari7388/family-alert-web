@@ -1,7 +1,7 @@
 "use client";
 
 import { useZegoCloud } from "@/lib/hooks/useZegoCloud";
-import { MdCallEnd, MdOutlineCall } from "react-icons/md";
+import { MdOutlineCall } from "react-icons/md";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -65,29 +65,53 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {members.map((member) => (
                 <li
                   key={member.uid}
-                  className="flex items-center justify-between bg-[#D1E6FF] p-3 rounded-lg shadow-sm"
+                  className={`flex items-center justify-between ${isCalling ? "" : "bg-[#D1E6FF]"} p-3 rounded-lg shadow-sm`}
                 >
                   {/* Left-aligned Member Name */}
-                  <div className="text-left">
-                    <h2 className="text-sm font-medium text-gray-800">
-                      {member.name}
-                    </h2>
-                  </div>
+
+
+                  {isCalling ? (
+
+                    <div></div>
+
+                  ) : (
+
+
+                    <div className="text-left">
+                      <h2 className="text-sm font-medium text-gray-800">
+                        {member.name}
+                      </h2>
+                    </div>
+
+                  )}
 
                   {/* Right-aligned Call Icon */}
                   <button
-                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "bg-[#FF4545]" : "bg-[#45DA4A]"
+                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "" : "bg-[#45DA4A]"
                       }`}
                   >
                     {isCalling ? (
-                      <MdCallEnd className="text-white text-lg" />
+                      <div></div>
+                      // <MdCallEnd className="text-white text-lg" />
                     ) : (
                       <MdOutlineCall className="text-white text-lg" />
                     )}
                   </button>
+
+
                 </li>
               ))}
             </ul>
+
+
+            {
+
+
+              isCalling ? <h2 className="text-[#FF4545] font-semibold text-xl text-center">Call Ended</h2> : <h2></h2>
+
+
+            }
+
           </div>
         )}
       </div>
@@ -104,12 +128,13 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {isSendingInvitation ? "Calling..." : "Start Group Call"}
             </button>
           ) : (
-            <button
-              onClick={handleEndCall}
-              className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
-            >
-              End Group Call
-            </button>
+            <div onClick={handleEndCall}></div>
+            // <button
+            //   onClick={handleEndCall}
+            //   className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
+            // >
+            //   End Group Call
+            // </button>
           )}
         </div>
       )}

@@ -57,7 +57,7 @@ export const useZegoCloud = ({
       console.error("Token error:", error);
       onError(
         "Token fetch failed: " +
-          (error instanceof Error ? error.message : "Unknown error")
+        (error instanceof Error ? error.message : "Unknown error")
       );
       throw error;
     }
@@ -131,9 +131,13 @@ export const useZegoCloud = ({
       const sendInvitation = async () => {
         try {
           await zpRef.current!.sendCallInvitation({
+
+
+
             callees: zegoUsers,
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
+
           });
         } catch (error) {
           if (retryCount < MAX_RETRIES) {
@@ -149,7 +153,7 @@ export const useZegoCloud = ({
     } catch (error) {
       onError(
         "Failed to start call: " +
-          (error instanceof Error ? error.message : "Unknown error")
+        (error instanceof Error ? error.message : "Unknown error")
       );
     } finally {
       setIsSendingInvitation(false);
