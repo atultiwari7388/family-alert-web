@@ -65,7 +65,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {members.map((member) => (
                 <li
                   key={member.uid}
-                  className={`flex items-center justify-between ${isCalling ? "" : "bg-[#D1E6FF]"} p-3 rounded-lg shadow-sm`}
+                  className={`flex items-center justify-between ${isCalling ? "" : "bg-[#D1E6FF]"} p-3 rounded-lg ${isCalling ? "" : "shadow-sm"}`}
                 >
                   {/* Left-aligned Member Name */}
 
