@@ -118,7 +118,7 @@ export const useZegoCloud = ({
     if (!zpRef.current || isSendingInvitation) return;
 
     setIsCalling(true);
-    setShowDialog(true);
+    // setShowDialog(true);
     setIsSendingInvitation(true);
 
     try {
@@ -173,5 +173,6 @@ export const useZegoCloud = ({
     startCall,
     endCall,
     zegoContainer,
+    setShowDialog,
   };
 };

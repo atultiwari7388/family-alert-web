@@ -31,6 +31,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
     startCall,
     endCall,
     zegoContainer,
+    setShowDialog,
   } = useZegoCloud({ onError, userName, userId });
 
   // New state to track call status
@@ -54,7 +55,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
           <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
             <p className="text-lg font-semibold text-gray-900">You are on speaker</p>
             <button
-              // onClick={() => startCall(members)}
+              onClick={() => startCall(members)}
               className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
             >
               Okay
@@ -150,7 +151,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
             <div>
               <button
-                onClick={() => startCall(members)}
+                onClick={() => setShowDialog(true)}
                 disabled={isLoading || isSendingInvitation}
                 className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
               >
