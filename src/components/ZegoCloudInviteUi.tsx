@@ -44,7 +44,33 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
     router.push("/");
   };
 
+  if (showDialog) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+        // onClick={() => startCall(members)}
+        >
+          <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
+            <p className="text-lg font-semibold text-gray-900">You are on speaker</p>
+            <button
+              // onClick={() => startCall(members)}
+              className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+
   return (
+
+
+
+
     <div className="">
       {isLoading && <div className="text-gray-500">Connecting...</div>}
 
@@ -132,23 +158,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               </button>
 
 
-              {showDialog ? (
 
-                <div
-                  className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                // onClick={() => startCall(members)}
-                >
-                  <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
-                    <p className="text-lg font-semibold text-gray-900">You are on speaker</p>
-                    <button
-                      // onClick={() => startCall(members)}
-                      className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
-                    >
-                      Okay
-                    </button>
-                  </div>
-                </div>
-              ) : (<></>)}
 
 
 
