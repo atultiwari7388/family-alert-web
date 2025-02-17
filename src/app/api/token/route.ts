@@ -1,5 +1,3 @@
-//new code
-
 import { NextRequest, NextResponse } from "next/server";
 import { createCipheriv, randomBytes } from "crypto";
 

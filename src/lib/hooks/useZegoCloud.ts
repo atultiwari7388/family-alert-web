@@ -25,6 +25,7 @@ export const useZegoCloud = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [roomID, setRoomID] = useState<string | null>(null);
   const [isCalling, setIsCalling] = useState<boolean>(false);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
   const [isSendingInvitation, setIsSendingInvitation] =
     useState<boolean>(false);
 
@@ -117,6 +118,7 @@ export const useZegoCloud = ({
     if (!zpRef.current || isSendingInvitation) return;
 
     setIsCalling(true);
+    setShowDialog(true);
     setIsSendingInvitation(true);
 
     try {
@@ -131,13 +133,9 @@ export const useZegoCloud = ({
       const sendInvitation = async () => {
         try {
           await zpRef.current!.sendCallInvitation({
-
-
-
             callees: zegoUsers,
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
-
           });
         } catch (error) {
           if (retryCount < MAX_RETRIES) {
@@ -157,17 +155,20 @@ export const useZegoCloud = ({
       );
     } finally {
       setIsSendingInvitation(false);
+      setShowDialog(false);
     }
   };
 
   const endCall = () => {
     zpRef.current?.hangUp();
     setIsCalling(false);
+    setShowDialog(false);
   };
 
   return {
     isLoading,
     isCalling,
+    showDialog,
     isSendingInvitation,
     startCall,
     endCall,

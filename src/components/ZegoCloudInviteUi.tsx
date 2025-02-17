@@ -27,6 +27,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
     isLoading,
     isCalling,
     isSendingInvitation,
+    showDialog,
     startCall,
     endCall,
     zegoContainer,
@@ -92,7 +93,6 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
                   >
                     {isCalling ? (
                       <div></div>
-                      // <MdCallEnd className="text-white text-lg" />
                     ) : (
                       <MdOutlineCall className="text-white text-lg" />
                     )}
@@ -119,22 +119,44 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
       {/* Group Call Controls */}
       {!callEnded && (
         <div className="w-full fixed bottom-6 flex justify-center">
-          {!isCalling && members.length > 0 ? (
-            <button
-              onClick={() => startCall(members)}
-              disabled={isLoading || isSendingInvitation}
-              className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
-            >
-              {isSendingInvitation ? "Calling..." : "Start Group Call"}
-            </button>
+          {!isCalling && !showDialog && members.length > 0 ? (
+
+
+            <div>
+              <button
+                onClick={() => startCall(members)}
+                disabled={isLoading || isSendingInvitation}
+                className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
+              >
+                {isSendingInvitation ? "Calling..." : "Start Group Call"}
+              </button>
+
+
+              {showDialog ? (
+
+                <div
+                  className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+                // onClick={() => startCall(members)}
+                >
+                  <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
+                    <p className="text-lg font-semibold text-gray-900">You are on speaker</p>
+                    <button
+                      // onClick={() => startCall(members)}
+                      className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
+                    >
+                      Okay
+                    </button>
+                  </div>
+                </div>
+              ) : (<></>)}
+
+
+
+
+            </div>
           ) : (
             <div onClick={handleEndCall}></div>
-            // <button
-            //   onClick={handleEndCall}
-            //   className="bg-[#FF4545] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#FF4545] hover:scale-105"
-            // >
-            //   End Group Call
-            // </button>
+
           )}
         </div>
       )}
