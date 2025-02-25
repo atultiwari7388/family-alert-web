@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
+import { sendNotification } from "./sendNotification";
+import { sendAlertMessage } from "./sendAlertMsg";
 
 interface UseZegoCloudProps {
   onError: (message: string) => void;
@@ -13,6 +15,8 @@ interface UseZegoCloudProps {
 interface Member {
   uid: string;
   name: string;
+  phoneNumber: string;
+  FCM_Id: string;
 }
 
 export const useZegoCloud = ({
@@ -58,7 +62,7 @@ export const useZegoCloud = ({
       console.error("Token error:", error);
       onError(
         "Token fetch failed: " +
-        (error instanceof Error ? error.message : "Unknown error")
+          (error instanceof Error ? error.message : "Unknown error")
       );
       throw error;
     }
@@ -118,7 +122,6 @@ export const useZegoCloud = ({
     if (!zpRef.current || isSendingInvitation) return;
 
     setIsCalling(true);
-    // setShowDialog(true);
     setIsSendingInvitation(true);
 
     try {
@@ -137,6 +140,30 @@ export const useZegoCloud = ({
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
           });
+
+          // Extract user tokens and phone numbers for alerts
+          const fcmTokens = members
+            .map((member) => member.FCM_Id)
+            .filter(Boolean);
+          const phoneNumbers = members
+            .map((member) => member.phoneNumber)
+            .filter(Boolean);
+
+          // Notification and Alert Message
+          if (fcmTokens.length > 0) {
+            await sendNotification(
+              fcmTokens,
+              "Incoming Call",
+              `${zegoUsers[0].userName} is calling you`
+            );
+          }
+
+          if (phoneNumbers.length > 0) {
+            await sendAlertMessage(
+              phoneNumbers,
+              "You have an incoming call. Please check the app."
+            );
+          }
         } catch (error) {
           if (retryCount < MAX_RETRIES) {
             retryCount++;
@@ -151,7 +178,7 @@ export const useZegoCloud = ({
     } catch (error) {
       onError(
         "Failed to start call: " +
-        (error instanceof Error ? error.message : "Unknown error")
+          (error instanceof Error ? error.message : "Unknown error")
       );
     } finally {
       setIsSendingInvitation(false);

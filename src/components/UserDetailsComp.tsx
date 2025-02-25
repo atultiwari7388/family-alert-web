@@ -36,87 +36,6 @@ export default function UserDetails({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // useEffect(() => {
-  //   if (!userId) return;
-
-  //   const fetchUserDetails = async () => {
-  //     try {
-  //       const userRef = doc(db, "userCollection", userId);
-  //       const userSnap = await getDoc(userRef);
-  //       if (!userSnap.exists()) {
-  //         setUserData(null);
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       const userData = userSnap.data() as UserData;
-  //       setUserData(userData);
-
-  //       if (userData.joinedVehicles && userData.joinedVehicles.length > 0) {
-  //         const vehicleGroupPromises = userData.joinedVehicles.map(
-  //           async (vehicleId) => {
-  //             const vehicleGroupRef = doc(db, "vehicleGroups", vehicleId);
-  //             const vehicleGroupSnap = await getDoc(vehicleGroupRef);
-  //             if (
-  //               vehicleGroupSnap.exists() &&
-  //               vehicleGroupSnap.data().admin === userId &&
-  //               //check group is primary or not
-  //               vehicleGroupSnap.data().isPrimary === true
-  //             ) {
-  //               return vehicleGroupRef;
-  //             }
-  //             return null;
-  //           }
-  //         );
-
-  //         const matchedVehicleGroupRefs = (
-  //           await Promise.all(vehicleGroupPromises)
-  //         ).filter((ref): ref is DocumentReference => ref !== null);
-
-  //         const memberPromises = matchedVehicleGroupRefs.map(
-  //           async (groupRef) => {
-  //             const membersCollectionRef = collection(groupRef, "members");
-  //             const membersSnap = await getDocs(membersCollectionRef);
-
-  //             const memberData = await Promise.all(
-  //               membersSnap.docs.map(async (memberDoc) => {
-  //                 const memberUid = memberDoc.id;
-  //                 const memberUserRef = doc(db, "userCollection", memberUid);
-  //                 const memberUserSnap = await getDoc(memberUserRef);
-
-  //                 if (memberUserSnap.exists()) {
-  //                   const { firstName, lastName } =
-  //                     memberUserSnap.data() as UserData;
-  //                   return {
-  //                     uid: memberUid,
-  //                     name: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
-  //                   };
-  //                 }
-
-  //                 return { uid: memberUid, name: "Unknown User" };
-  //               })
-  //             );
-
-  //             return memberData;
-  //           }
-  //         );
-
-  //         const allMembers = (await Promise.all(memberPromises)).flat();
-  //         setMembers(allMembers);
-
-  //         console.log("All Members List", allMembers);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching user or members:", error);
-  //       setError("Failed to fetch user data.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchUserDetails();
-  // }, [userId]);
-
   useEffect(() => {
     if (!userId || !groupId) return;
 
@@ -234,3 +153,84 @@ export default function UserDetails({
     </div>
   );
 }
+
+// useEffect(() => {
+//   if (!userId) return;
+
+//   const fetchUserDetails = async () => {
+//     try {
+//       const userRef = doc(db, "userCollection", userId);
+//       const userSnap = await getDoc(userRef);
+//       if (!userSnap.exists()) {
+//         setUserData(null);
+//         setLoading(false);
+//         return;
+//       }
+
+//       const userData = userSnap.data() as UserData;
+//       setUserData(userData);
+
+//       if (userData.joinedVehicles && userData.joinedVehicles.length > 0) {
+//         const vehicleGroupPromises = userData.joinedVehicles.map(
+//           async (vehicleId) => {
+//             const vehicleGroupRef = doc(db, "vehicleGroups", vehicleId);
+//             const vehicleGroupSnap = await getDoc(vehicleGroupRef);
+//             if (
+//               vehicleGroupSnap.exists() &&
+//               vehicleGroupSnap.data().admin === userId &&
+//               //check group is primary or not
+//               vehicleGroupSnap.data().isPrimary === true
+//             ) {
+//               return vehicleGroupRef;
+//             }
+//             return null;
+//           }
+//         );
+
+//         const matchedVehicleGroupRefs = (
+//           await Promise.all(vehicleGroupPromises)
+//         ).filter((ref): ref is DocumentReference => ref !== null);
+
+//         const memberPromises = matchedVehicleGroupRefs.map(
+//           async (groupRef) => {
+//             const membersCollectionRef = collection(groupRef, "members");
+//             const membersSnap = await getDocs(membersCollectionRef);
+
+//             const memberData = await Promise.all(
+//               membersSnap.docs.map(async (memberDoc) => {
+//                 const memberUid = memberDoc.id;
+//                 const memberUserRef = doc(db, "userCollection", memberUid);
+//                 const memberUserSnap = await getDoc(memberUserRef);
+
+//                 if (memberUserSnap.exists()) {
+//                   const { firstName, lastName } =
+//                     memberUserSnap.data() as UserData;
+//                   return {
+//                     uid: memberUid,
+//                     name: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+//                   };
+//                 }
+
+//                 return { uid: memberUid, name: "Unknown User" };
+//               })
+//             );
+
+//             return memberData;
+//           }
+//         );
+
+//         const allMembers = (await Promise.all(memberPromises)).flat();
+//         setMembers(allMembers);
+
+//         console.log("All Members List", allMembers);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching user or members:", error);
+//       setError("Failed to fetch user data.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   fetchUserDetails();
+// }, [userId]);

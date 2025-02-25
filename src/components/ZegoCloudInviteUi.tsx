@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 interface Member {
   uid: string;
   name: string;
+  phoneNumber: string;
+  FCM_Id: string;
 }
 
 interface ZegoCloudInviteUIProps {
@@ -40,20 +42,19 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
 
   const handleEndCall = () => {
     endCall();
-    setCallEnded(true); // Mark call as ended
-    // TODO: Redirect to the home page
+    setCallEnded(true);
+
     router.push("/");
   };
 
   if (showDialog) {
     return (
       <>
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        // onClick={() => startCall(members)}
-        >
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
-            <p className="text-lg font-semibold text-gray-900">You are on speaker</p>
+            <p className="text-lg font-semibold text-gray-900">
+              You are on speaker
+            </p>
             <button
               onClick={() => startCall(members)}
               className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
@@ -66,12 +67,7 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
     );
   }
 
-
   return (
-
-
-
-
     <div className="">
       {isLoading && <div className="text-gray-500">Connecting...</div>}
 
@@ -93,30 +89,27 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               {members.map((member) => (
                 <li
                   key={member.uid}
-                  className={`flex items-center justify-between ${isCalling ? "" : "bg-[#D1E6FF]"} p-3 rounded-lg ${isCalling ? "" : "shadow-sm"}`}
+                  className={`flex items-center justify-between ${
+                    isCalling ? "" : "bg-[#D1E6FF]"
+                  } p-3 rounded-lg ${isCalling ? "" : "shadow-sm"}`}
                 >
                   {/* Left-aligned Member Name */}
 
-
                   {isCalling ? (
-
                     <div></div>
-
                   ) : (
-
-
                     <div className="text-left">
                       <h2 className="text-sm font-medium text-gray-800">
                         {member.name}
                       </h2>
                     </div>
-
                   )}
 
                   {/* Right-aligned Call Icon */}
                   <button
-                    className={`p-2 rounded-full transition-all duration-300 ${isCalling ? "" : "bg-[#45DA4A]"
-                      }`}
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      isCalling ? "" : "bg-[#45DA4A]"
+                    }`}
                   >
                     {isCalling ? (
                       <div></div>
@@ -124,21 +117,17 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
                       <MdOutlineCall className="text-white text-lg" />
                     )}
                   </button>
-
-
                 </li>
               ))}
             </ul>
 
-
-            {
-
-
-              isCalling ? <h2 className="text-[#FF4545] font-semibold text-xl text-center">Call Ended</h2> : <h2></h2>
-
-
-            }
-
+            {isCalling ? (
+              <h2 className="text-[#FF4545] font-semibold text-xl text-center">
+                Call Ended
+              </h2>
+            ) : (
+              <h2></h2>
+            )}
           </div>
         )}
       </div>
@@ -147,8 +136,6 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
       {!callEnded && (
         <div className="w-full fixed bottom-6 flex justify-center">
           {!isCalling && !showDialog && members.length > 0 ? (
-
-
             <div>
               <button
                 onClick={() => setShowDialog(true)}
@@ -157,17 +144,9 @@ const ZegoCloudInviteUI: React.FC<ZegoCloudInviteUIProps> = ({
               >
                 {isSendingInvitation ? "Calling..." : "Start Group Call"}
               </button>
-
-
-
-
-
-
-
             </div>
           ) : (
             <div onClick={handleEndCall}></div>
-
           )}
         </div>
       )}
