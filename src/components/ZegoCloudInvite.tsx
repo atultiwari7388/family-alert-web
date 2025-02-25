@@ -4,7 +4,7 @@
 import ZegoCloudInviteUI from "./ZegoCloudInviteUi";
 
 interface ZegoCloudInviteProps {
-  members: { uid: string; name: string }[];
+  members: { uid: string; name: string; phoneNumber: string; FCM_Id: string }[];
   onError: (message: string) => void;
   userName: string;
   userId: string;

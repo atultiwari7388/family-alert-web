@@ -22,6 +22,8 @@ interface UserData {
 interface MemberData {
   uid: string;
   name: string;
+  phoneNumber: string;
+  FCM_Id: string;
 }
 
 export default function UserDetails({
@@ -88,9 +90,16 @@ export default function UserDetails({
               return {
                 uid: memberUid,
                 name: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+                phoneNumber: memberUserSnap.data().mobileNumber ?? "",
+                FCM_Id: memberUserSnap.data().FCM_Id ?? "",
               };
             }
-            return { uid: memberUid, name: "Unknown User" };
+            return {
+              uid: memberUid,
+              name: "Unknown User",
+              phoneNumber: "",
+              FCM_Id: "",
+            };
           })
         );
 
