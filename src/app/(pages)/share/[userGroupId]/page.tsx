@@ -4,12 +4,11 @@ export const metadata = {
   title: "Welcome to Family Alert",
 };
 
-export default async function UserPage({
-  params,
-}: {
+interface PageProps {
   params: { userGroupId: string };
-}) {
-  // const { userId } = await params;
+}
+
+export default function UserPage({ params }: PageProps) {
   const [userId, groupId] = params.userGroupId.split("-");
   return <UserDetails userId={userId} groupId={groupId} />;
 }
