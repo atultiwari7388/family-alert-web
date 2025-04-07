@@ -166,6 +166,8 @@ import { ZegoUIKitPrebuilt, ZegoUser } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
 import { useRouter } from "next/navigation";
 import { MdOutlineCall } from "react-icons/md";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firestore/firebase";
 
 interface ZegoCloudInviteProps {
   members: { uid: string; name: string }[];
@@ -191,13 +193,6 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   const [callEnded, setCallEnded] = useState(false);
 
   const router = useRouter();
-
-  const handleEndCall = () => {
-    endCall();
-    setCallEnded(true);
-
-    router.push("/");
-  };
 
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -338,6 +333,13 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     setShowDialog(false);
   };
 
+  const handleEndCall = () => {
+    endCall();
+    setCallEnded(true);
+
+    router.push("/");
+  };
+
   const callMembers = async (members: { uid: string; name: string }[]) => {
     console.log("[Debug] callMembers called, zpRef.current:", !!zpRef.current);
 
@@ -361,6 +363,12 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
             callees: zegoUsers,
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
+          });
+          // Call Firebase Function
+          const sendNewAlertMsg = httpsCallable(functions, "sendNewAlertMsg");
+          await sendNewAlertMsg({
+            adminUid: userId,
+            senderName: userName || "Someone",
           });
           console.log(`Call invitation sent to ${members.length} members`);
         } catch (error: Error | unknown) {
