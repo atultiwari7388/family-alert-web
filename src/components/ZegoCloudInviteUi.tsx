@@ -164,6 +164,8 @@
 import { useEffect, useState, useRef } from "react";
 import { ZegoUIKitPrebuilt, ZegoUser } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
+import { useRouter } from "next/navigation";
+import { MdOutlineCall } from "react-icons/md";
 
 interface ZegoCloudInviteProps {
   members: { uid: string; name: string }[];
@@ -180,14 +182,22 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
 }) => {
   const zpRef = useRef<ZegoUIKitPrebuilt | null>(null);
   const zegoContainer = useRef<HTMLDivElement | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [roomID, setRoomID] = useState<string | null>(null);
-  const [isCalling, setIsCalling] = useState(false);
-  const [callingMember, setCallingMember] = useState<{
-    uid: string;
-    name: string;
-  } | null>(null);
-  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
+  const [isCalling, setIsCalling] = useState<boolean>(false);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+  const [isSendingInvitation, setIsSendingInvitation] =
+    useState<boolean>(false);
+  const [callEnded, setCallEnded] = useState(false);
+
+  const router = useRouter();
+
+  const handleEndCall = () => {
+    endCall();
+    setCallEnded(true);
+
+    router.push("/");
+  };
 
   const generateUniqueRoomId = () => {
     return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -313,6 +323,7 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
       zp = null;
       console.log("[Debug] Cleanup complete");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, userName, onError, roomID, members]);
 
   const startCall = (members: { uid: string; name: string }[]) => {
@@ -322,11 +333,9 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
   };
 
   const endCall = () => {
-    if (zpRef.current) {
-      zpRef.current.hangUp();
-    }
+    zpRef.current?.hangUp();
     setIsCalling(false);
-    setCallingMember(null);
+    setShowDialog(false);
   };
 
   const callMembers = async (members: { uid: string; name: string }[]) => {
@@ -376,50 +385,112 @@ const ZegoCloudInvite: React.FC<ZegoCloudInviteProps> = ({
     }
   };
 
-  if (members) {
+  if (showDialog) {
+    return (
+      <>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-11/12 max-w-sm text-center">
+            <p className="text-lg font-semibold text-gray-900">
+              You are on speaker
+            </p>
+            <button
+              onClick={() => startCall(members)}
+              className="mt-4 bg-[#45DA4A] text-white font-semibold px-6 py-2 rounded-full shadow-md transition-all duration-300 hover:bg-[#3cc13f] hover:scale-105"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div>
-      {isLoading && <div>Connecting...</div>}
+    <div className="">
+      {isLoading && <div className="text-gray-500">Connecting...</div>}
 
-      {isCalling && callingMember && (
-        <div className="call-ui">
-          <div>Calling {callingMember.name}...</div>
-          <button onClick={endCall}>End Call</button>
-        </div>
-      )}
+      <div className="w-full">
+        {/* Show "Call Cancelled" if the call is ended */}
+        {callEnded ? (
+          <div className="text-gray-600 text-center text-lg font-semibold">
+            Call Cancelled
+          </div>
+        ) : members.length === 0 ? (
+          <div className="text-gray-600 text-center">
+            Please select a primary group first or add members to the existing
+            group.
+          </div>
+        ) : (
+          <div className="w-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 transition-all duration-300">
+            {/* Member List */}
+            <ul className="space-y-3 w-full">
+              {members.map((member) => (
+                <li
+                  key={member.uid}
+                  className={`flex items-center justify-between ${
+                    isCalling ? "" : "bg-[#D1E6FF]"
+                  } p-3 rounded-lg ${isCalling ? "" : "shadow-sm"}`}
+                >
+                  {/* Left-aligned Member Name */}
 
-      {!isCalling && (
-        <div className="member-list">
-          <div>My User Name is {userName}</div>
-          <div>My Members List</div>
+                  {isCalling ? (
+                    <div></div>
+                  ) : (
+                    <div className="text-left">
+                      <h2 className="text-sm font-medium text-gray-800">
+                        {member.name}
+                      </h2>
+                    </div>
+                  )}
 
-          {members.length === 0 ? ( // Check if members array is empty
+                  {/* Right-aligned Call Icon */}
+                  <button
+                    className={`p-2 rounded-full transition-all duration-300 ${
+                      isCalling ? "" : "bg-[#45DA4A]"
+                    }`}
+                  >
+                    {isCalling ? (
+                      <div></div>
+                    ) : (
+                      <MdOutlineCall className="text-white text-lg" />
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            {isCalling ? (
+              <h2 className="text-[#FF4545] font-semibold text-xl text-center">
+                Call Ended
+              </h2>
+            ) : (
+              <h2></h2>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Group Call Controls */}
+      {!callEnded && (
+        <div className="w-full fixed bottom-6 flex justify-center">
+          {!isCalling && !showDialog && members.length > 0 ? (
             <div>
-              Please select a primary group first or add members to the existing
-              group. {/* Display your custom message */}
+              <button
+                onClick={() => setShowDialog(true)}
+                disabled={isLoading || isSendingInvitation}
+                className="bg-[#45DA4A] text-white font-semibold rounded-full shadow-lg px-14 py-4 transition-all duration-300 hover:bg-[#45DA4A] hover:scale-105 disabled:opacity-50"
+              >
+                {isSendingInvitation ? "Calling..." : "Start Group Call"}
+              </button>
             </div>
           ) : (
-            members.map((member) => (
-              <div key={member.uid} className="member-item">
-                <span>
-                  {member.name} ({member.uid})
-                </span>
-              </div>
-            ))
+            <div onClick={handleEndCall}></div>
           )}
-          <button
-            onClick={() => startCall(members)}
-            disabled={isLoading || isSendingInvitation}
-            className="bg-blue-500 rounded-sm"
-          >
-            Call All
-          </button>
         </div>
       )}
 
-      <div ref={zegoContainer} style={{ width: "100%", height: "500px" }} />
+      {/* Video Call Container */}
+      {!callEnded && <div ref={zegoContainer} className="w-full h-[500px]" />}
     </div>
   );
 };
