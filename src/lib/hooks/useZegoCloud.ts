@@ -5,8 +5,6 @@ import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { ZIM } from "zego-zim-web";
 import { sendNotification } from "./sendNotification";
 import { sendAlertMessage } from "./sendAlertMsg";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../firestore/firebase";
 
 interface UseZegoCloudProps {
   onError: (message: string) => void;
@@ -142,21 +140,6 @@ export const useZegoCloud = ({
             callType: ZegoUIKitPrebuilt.InvitationTypeVoiceCall,
             timeout: 60,
           });
-
-          // Call Firebase Function
-          const sendNewAlertMsg = httpsCallable(functions, "sendNewAlertMsg");
-          await sendNewAlertMsg({
-            adminUid: userId,
-            senderName: userName || "Someone",
-          });
-
-          console.log(
-            "Call invitation sent successfully.",
-            "adminUid:",
-            userId,
-            "senderName:",
-            userName
-          );
 
           // Extract user tokens and phone numbers for alerts
           const fcmTokens = members
