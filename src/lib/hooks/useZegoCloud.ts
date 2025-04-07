@@ -83,6 +83,9 @@ export const useZegoCloud = ({
     const appId = parseInt(process.env.NEXT_PUBLIC_ZEGO_APP_ID || "0", 10);
     let isMounted = true;
 
+    console.log("Zego Cloud initialized with App ID:", appId);
+    console.log("User ID:", userId);
+
     const initializeZego = async () => {
       if (!zegoContainer.current || !roomID || !userId) return;
 
